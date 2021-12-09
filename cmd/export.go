@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/rpdac"
 	"github.com/spf13/cobra"
@@ -26,8 +28,10 @@ var (
 				return err
 			}
 
+			r := rpdac.NewReportPortal(c)
+
 			// retrieve the Dashboard and Widgets in a single reusable object
-			d, err := rpdac.LoadDashboardFromReportPortal(c, exportProject, exportDashboard)
+			d, err := r.GetDashboard(exportProject, exportDashboard)
 			if err != nil {
 				return err
 			}
@@ -37,6 +41,8 @@ var (
 			if err != nil {
 				return err
 			}
+
+			log.Printf("Dashboard \"%s\" exported to \"%s\"", d.Name, exportFile)
 			return nil
 		},
 	}

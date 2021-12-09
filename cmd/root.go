@@ -85,8 +85,6 @@ func requireReportPortalClient() (*reportportal.Client, error) {
 
 	oc := oauth2.NewClient(context.Background(), oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
 
-	log.Printf("endpoint: %s\n", endpoint)
-
 	// initizlie the ReportPortal client
 	rc, err := reportportal.NewClient(oc, endpoint)
 	if err != nil {

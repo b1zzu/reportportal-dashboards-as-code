@@ -1,10 +1,11 @@
 package rpdac
 
 import (
+	"crypto/sha1"
 	"fmt"
-	"os"
+	"io"
+	"io/ioutil"
 
-	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"gopkg.in/yaml.v2"
 )
 
@@ -55,43 +56,20 @@ func NewWidget(name, description, widgetType string, width, height, positionX, p
 	}
 }
 
-func LoadDashboardFromReportPortal(client *reportportal.Client, project string, dashboardID int) (*Dashboard, error) {
+func LoadDashboardFromFile(file string) (*Dashboard, error) {
 
-	// retireve the dashboard defintion
-	d, _, err := client.Dashboard.Get(project, dashboardID)
+	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving dashboard %d from project %s: %w", dashboardID, project, err)
+		return nil, err
 	}
 
-	widgets := make([]*Widget, len(d.Widgets))
-
-	// retrieve all widgets definitions
-	for i, dw := range d.Widgets {
-		w, _, err := client.Widget.Get(project, dw.WidgetId)
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetId, project, err)
-		}
-
-		filters := make([]int, len(w.AppliedFilters))
-		for j, f := range w.AppliedFilters {
-			filters[j] = f.ID
-		}
-
-		widgets[i] = NewWidget(
-			w.Name,
-			w.Description,
-			w.WidgetType,
-			dw.WidgetSize.Width,
-			dw.WidgetSize.Height,
-			dw.WidgetPosition.PositionX,
-			dw.WidgetPosition.PositionY,
-			filters,
-			w.ContentParameters.ContentFields,
-			w.ContentParameters.ItemsCount,
-			w.ContentParameters.WidgetOptions)
+	var d Dashboard
+	err = yaml.Unmarshal(b, &d)
+	if err != nil {
+		return nil, err
 	}
 
-	return NewDashboard(d.Name, widgets), nil
+	return &d, nil
 }
 
 func (d *Dashboard) ToYaml() ([]byte, error) {
@@ -109,9 +87,15 @@ func (d *Dashboard) WriteToFile(file string) error {
 		return err
 	}
 
-	err = os.WriteFile(file, y, 0660)
+	err = ioutil.WriteFile(file, y, 0660)
 	if err != nil {
 		return fmt.Errorf("error writing yaml dashboard %s to file %s: %w", d.Name, file, err)
 	}
 	return nil
+}
+
+func (d *Dashboard) HashName() string {
+	h := sha1.New()
+	io.WriteString(h, d.Name)
+	return string(h.Sum(nil)[:4])
 }

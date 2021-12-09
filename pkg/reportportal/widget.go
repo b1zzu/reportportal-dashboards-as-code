@@ -31,6 +31,15 @@ type WidgetAppliedFilter struct {
 	// incomplete
 }
 
+type NewWidget struct {
+	Name              string                   `json:"name"`
+	Description       string                   `json:"description"`
+	Share             bool                     `json:"share"`
+	WidgetType        string                   `json:"widgetType"`
+	ContentParameters *WidgetContentParameters `json:"contentParameters"`
+	Filters           []int                    `json:"filterIds"`
+}
+
 func (s *WidgetService) Get(projectName string, id int) (*Widget, *Response, error) {
 	u := fmt.Sprintf("v1/%v/widget/%v", projectName, id)
 
@@ -48,78 +57,19 @@ func (s *WidgetService) Get(projectName string, id int) (*Widget, *Response, err
 	return w, resp, nil
 }
 
-// {
-//     "description": "",
-//     "owner": "dbizzarr",
-//     "share": true,
-//     "id": 71,
-//     "name": "Overall statistics [Last 7 days]",
-//     "widgetType": "overallStatistics",
-//     "contentParameters": {
-//         "contentFields": [
-//             "statistics$executions$total",
-//             "statistics$executions$passed",
-//             "statistics$executions$failed",
-//             "statistics$executions$skipped",
-//             "statistics$defects$product_bug$pb001",
-//             "statistics$defects$product_bug$pb_qdy9r7uu9q9g",
-//             "statistics$defects$automation_bug$ab001",
-//             "statistics$defects$system_issue$si001",
-//             "statistics$defects$system_issue$si_1iuqflmhg6hk6",
-//             "statistics$defects$no_defect$nd001",
-//             "statistics$defects$to_investigate$ti001",
-//             "statistics$defects$system_issue$si_1h7o519q5xeg5",
-//             "statistics$defects$automation_bug$ab_uv8mlzz5fqzn",
-//             "statistics$defects$automation_bug$ab_1ien71b1ve81k",
-//             "statistics$defects$automation_bug$ab_t4f3ctreg3sl"
-//         ],
-//         "itemsCount": 168,
-//         "widgetOptions": {
-//             "latest": false,
-//             "viewMode": "panel"
-//         }
-//     },
-//     "appliedFilters": [
-//         {
-//             "owner": "dbizzarr",
-//             "share": true,
-//             "id": 2,
-//             "name": "mk-e2e-test-suite",
-//             "conditions": [
-//                 {
-//                     "filteringField": "name",
-//                     "condition": "eq",
-//                     "value": "mk-e2e-test-suite"
-//                 }
-//             ],
-//             "orders": [
-//                 {
-//                     "sortingColumn": "startTime",
-//                     "isAsc": false
-//                 },
-//                 {
-//                     "sortingColumn": "number",
-//                     "isAsc": false
-//                 }
-//             ],
-//             "type": "Launch"
-//         }
-//     ],
-//     "content": {
-//         "result": [
-//             {
-//                 "values": {
-//                     "statistics$defects$system_issue$si001": 3,
-//                     "statistics$defects$system_issue$si_1iuqflmhg6hk6": 0,
-//                     "statistics$executions$passed": 22950,
-//                     "statistics$executions$skipped": 2483,
-//                     "statistics$defects$to_investigate$ti001": 53,
-//                     "statistics$defects$automation_bug$ab001": 138,
-//                     "statistics$defects$product_bug$pb001": 3,
-//                     "statistics$executions$failed": 133,
-//                     "statistics$executions$total": 25566
-//                 }
-//             }
-//         ]
-//     }
-// }
+func (s *WidgetService) Post(projectName string, w *NewWidget) (int, *Response, error) {
+	u := fmt.Sprintf("v1/%s/widget", projectName)
+
+	req, err := s.client.NewRequest("POST", u, w)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	e := new(EntryCreated)
+	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return 0, resp, err
+	}
+
+	return e.ID, resp, nil
+}
