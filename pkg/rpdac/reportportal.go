@@ -32,31 +32,34 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetID, project, err)
 		}
 
-		filters := make([]int, len(w.AppliedFilters))
-		for j, f := range w.AppliedFilters {
-			filters[j] = f.ID
-		}
-
-		widgets[i] = NewWidget(
-			w.Name,
-			w.Description,
-			w.WidgetType,
-			dw.WidgetSize.Width,
-			dw.WidgetSize.Height,
-			dw.WidgetPosition.PositionX,
-			dw.WidgetPosition.PositionY,
-			filters,
-			w.ContentParameters.ContentFields,
-			w.ContentParameters.ItemsCount,
-			w.ContentParameters.WidgetOptions)
+		widgets[i] = ToWidget(w, dw)
 	}
 
-	return NewDashboard(d.Name, widgets), nil
+	return ToDashboard(d, widgets), nil
 }
 
 func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
-	hash := d.HashName()
+	dashboardHash := d.HashName()
+
+	// resolve all filters
+	filtersMap := make(map[string]int)
+	for _, w := range d.Widgets {
+		for _, filterName := range w.Filters {
+
+			if _, ok := filtersMap[filterName]; ok {
+				// filter already resolved
+				continue
+			}
+
+			f, _, err := r.client.Filter.GetByName(project, filterName)
+			if err != nil {
+				return fmt.Errorf("error resolving filter \"%s\" in widget \"%s\" in dashboard \"%s\": %w", filterName, w.Name, d.Name, err)
+			}
+
+			filtersMap[filterName] = f.ID
+		}
+	}
 
 	dashboardID, _, err := r.client.Dashboard.Create(project, &reportportal.NewDashboard{Name: d.Name, Share: true})
 	if err != nil {
@@ -66,34 +69,20 @@ func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
 	for _, w := range d.Widgets {
 
-		nw := &reportportal.NewWidget{
-			// For the rpdac tool the widget name is not unique across all dashboards, while fore ReportPortal it is,
-			// by adding the dashboard name sha to the widget name we make it generic
-			Name:        fmt.Sprintf("%s #%s", w.Name, hash),
-			Description: w.Description,
-			Share:       true,
-			WidgetType:  w.WidgetType,
-			Filters:     w.Filters,
-			ContentParameters: &reportportal.WidgetContentParameters{
-				ItemsCount:    w.ContentParameters.ItemsCount,
-				ContentFields: w.ContentParameters.ContentFields,
-				WidgetOptions: w.ContentParameters.WidgetOptions,
-			},
+		filters := make([]int, len(w.Filters))
+		for j, f := range w.Filters {
+			filters[j] = filtersMap[f]
 		}
+
+		nw, dw := FromWidget(dashboardHash, w, filters)
+
 		widgetID, _, err := r.client.Widget.Post(project, nw)
 		if err != nil {
 			return fmt.Errorf("error creating widget %s: %w", w.Name, err)
 		}
 		log.Printf("widget %s created with id %d", w.Name, widgetID)
 
-		dw := &reportportal.DashboardWidget{
-			WidgetID:       widgetID,
-			Share:          true,
-			WidgetName:     w.Name,
-			WidgetType:     w.WidgetType,
-			WidgetSize:     &reportportal.DashboardWidgetSize{Width: w.WidgetSize.Width, Height: w.WidgetSize.Height},
-			WidgetPosition: &reportportal.DashboardWidgetPosition{PositionX: w.WidgetPosition.PositionX, PositionY: w.WidgetPosition.PositionY},
-		}
+		dw.WidgetID = widgetID
 
 		_, _, err = r.client.Dashboard.AddWidget(project, dashboardID, dw)
 		if err != nil {

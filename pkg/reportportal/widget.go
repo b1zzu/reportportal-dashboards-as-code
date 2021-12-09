@@ -14,7 +14,7 @@ type Widget struct {
 	Name              string                   `json:"name"`
 	WidgetType        string                   `json:"widgetType"`
 	ContentParameters *WidgetContentParameters `json:"contentParameters"`
-	AppliedFilters    []*WidgetAppliedFilter   `json:"appliedFilters"`
+	AppliedFilters    []*Filter                `json:"appliedFilters"`
 	Content           interface{}              `json:"content"` // incomplete
 }
 
@@ -22,13 +22,6 @@ type WidgetContentParameters struct {
 	ContentFields []string               `json:"contentFields"`
 	ItemsCount    int                    `json:"itemsCount"`
 	WidgetOptions map[string]interface{} `json:"widgetOptions"`
-}
-
-type WidgetAppliedFilter struct {
-	Share bool   `json:"share"`
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	// incomplete
 }
 
 type NewWidget struct {

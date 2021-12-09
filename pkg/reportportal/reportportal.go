@@ -25,6 +25,7 @@ type Client struct {
 	// Services used for talking to different parts of the ReportPortal API.
 	Dashboard *DashboardService
 	Widget    *WidgetService
+	Filter    *FilterService
 }
 
 type service struct {
@@ -50,6 +51,7 @@ func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
 	c.common.client = c
 	c.Dashboard = (*DashboardService)(&c.common)
 	c.Widget = (*WidgetService)(&c.common)
+	c.Filter = (*FilterService)(&c.common)
 	return c, nil
 }
 

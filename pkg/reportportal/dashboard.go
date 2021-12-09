@@ -74,7 +74,7 @@ func (s *DashboardService) GetByName(projectName, name string) (*Dashboard, *Res
 	}
 
 	if len(dl.Content) == 0 {
-		return nil, resp, NewDashboardNotFoundError(name, projectName)
+		return nil, resp, NewDashboardNotFoundError(projectName, name)
 	}
 
 	return dl.Content[0], resp, nil
