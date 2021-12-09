@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"regexp"
+	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"gopkg.in/yaml.v2"
@@ -46,11 +49,39 @@ func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
 	return &Dashboard{Name: d.Name, Widgets: widgets}
 }
 
-func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget) *Widget {
+// convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
+func DecodeFieldsSubTypes(fields []string, subTypesMap map[string]string) ([]string, error) {
+
+	r := regexp.MustCompile(`^\w{2}_\w*$`)
+	result := make([]string, len(fields))
+	for j, f := range fields {
+		p := strings.Split(f, "$")
+		log.Printf("%+v", p)
+		if p[0] == "statistics" && p[1] == "defects" && r.MatchString(p[3]) {
+			s, ok := subTypesMap[p[3]]
+			if !ok {
+				return nil, fmt.Errorf("error finding a map for the field \"%s\"", f)
+			}
+			p[3] = s // replace the locator with the short name
+			result[j] = strings.Join(p, "$")
+		} else {
+			// keep it like it is
+			result[j] = f
+		}
+	}
+	return result, nil
+}
+
+func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, subTypesMap map[string]string) (*Widget, error) {
 
 	filters := make([]string, len(w.AppliedFilters))
 	for j, f := range w.AppliedFilters {
 		filters[j] = f.Name
+	}
+
+	fields, err := DecodeFieldsSubTypes(w.ContentParameters.ContentFields, subTypesMap)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding sub types in widget \"%s\": %w", w.Name, err)
 	}
 
 	return &Widget{
@@ -60,11 +91,16 @@ func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget) *Widget 
 		WidgetSize:        &WidgetSize{Width: dw.WidgetSize.Width, Height: dw.WidgetSize.Height},
 		WidgetPosition:    &WidgetPosition{PositionX: dw.WidgetPosition.PositionX, PositionY: dw.WidgetPosition.PositionY},
 		Filters:           filters,
-		ContentParameters: &WidgetContentParameters{ContentFields: w.ContentParameters.ContentFields, ItemsCount: w.ContentParameters.ItemsCount, WidgetOptions: w.ContentParameters.WidgetOptions},
-	}
+		ContentParameters: &WidgetContentParameters{ContentFields: fields, ItemsCount: w.ContentParameters.ItemsCount, WidgetOptions: w.ContentParameters.WidgetOptions},
+	}, nil
 }
 
-func FromWidget(dashboardHash string, w *Widget, widgetFilters []int) (*reportportal.NewWidget, *reportportal.DashboardWidget) {
+func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int) (*reportportal.NewWidget, *reportportal.DashboardWidget) {
+
+	filters := make([]int, len(w.Filters))
+	for j, f := range w.Filters {
+		filters[j] = filtersMap[f]
+	}
 
 	nw := &reportportal.NewWidget{
 		// For the rpdac tool the widget name is not unique across all dashboards, while fore ReportPortal it is,
@@ -73,7 +109,7 @@ func FromWidget(dashboardHash string, w *Widget, widgetFilters []int) (*reportpo
 		Description: w.Description,
 		Share:       true,
 		WidgetType:  w.WidgetType,
-		Filters:     widgetFilters,
+		Filters:     filters,
 		ContentParameters: &reportportal.WidgetContentParameters{
 			ItemsCount:    w.ContentParameters.ItemsCount,
 			ContentFields: w.ContentParameters.ContentFields,

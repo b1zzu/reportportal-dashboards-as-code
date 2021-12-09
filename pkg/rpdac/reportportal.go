@@ -25,6 +25,18 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 
 	widgets := make([]*Widget, len(d.Widgets))
 
+	ps, _, err := r.client.ProjectSettings.Get(project)
+	if err != nil {
+		return nil, err
+	}
+
+	subTypesMap := make(map[string]string)
+	for _, g := range ps.SubTypes {
+		for _, t := range g {
+			subTypesMap[t.Locator] = t.ShortName
+		}
+	}
+
 	// retrieve all widgets definitions
 	for i, dw := range d.Widgets {
 		w, _, err := r.client.Widget.Get(project, dw.WidgetID)
@@ -32,7 +44,10 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetID, project, err)
 		}
 
-		widgets[i] = ToWidget(w, dw)
+		widgets[i], err = ToWidget(w, dw, subTypesMap)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return ToDashboard(d, widgets), nil
@@ -69,12 +84,7 @@ func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
 	for _, w := range d.Widgets {
 
-		filters := make([]int, len(w.Filters))
-		for j, f := range w.Filters {
-			filters[j] = filtersMap[f]
-		}
-
-		nw, dw := FromWidget(dashboardHash, w, filters)
+		nw, dw := FromWidget(dashboardHash, w, filtersMap)
 
 		widgetID, _, err := r.client.Widget.Post(project, nw)
 		if err != nil {

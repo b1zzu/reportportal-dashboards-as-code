@@ -23,9 +23,10 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// Services used for talking to different parts of the ReportPortal API.
-	Dashboard *DashboardService
-	Widget    *WidgetService
-	Filter    *FilterService
+	Dashboard       *DashboardService
+	Widget          *WidgetService
+	Filter          *FilterService
+	ProjectSettings *ProjectSettingsService
 }
 
 type service struct {
@@ -52,6 +53,7 @@ func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
 	c.Dashboard = (*DashboardService)(&c.common)
 	c.Widget = (*WidgetService)(&c.common)
 	c.Filter = (*FilterService)(&c.common)
+	c.ProjectSettings = (*ProjectSettingsService)(&c.common)
 	return c, nil
 }
 
