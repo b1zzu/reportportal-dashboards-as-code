@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
@@ -52,12 +51,11 @@ func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
 func DecodeFieldsSubTypes(fields []string, subTypesMap map[string]string) ([]string, error) {
 
-	r := regexp.MustCompile(`^\w{2}_\w*$`)
 	result := make([]string, len(fields))
 	for j, f := range fields {
 		p := strings.Split(f, "$")
 		log.Printf("%+v", p)
-		if p[0] == "statistics" && p[1] == "defects" && r.MatchString(p[3]) {
+		if p[0] == "statistics" && p[1] == "defects" {
 			s, ok := subTypesMap[p[3]]
 			if !ok {
 				return nil, fmt.Errorf("error finding a map for the field \"%s\"", f)
