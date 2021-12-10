@@ -2,6 +2,7 @@ package reportportal
 
 import (
 	"fmt"
+	"net/url"
 )
 
 type DashboardService service
@@ -60,7 +61,7 @@ func (e *DashboardNotFoundError) Error() string {
 }
 
 func (s *DashboardService) GetByName(projectName, name string) (*Dashboard, *Response, error) {
-	u := fmt.Sprintf("v1/%s/dashboard?filter.eq.name=%s", projectName, name)
+	u := fmt.Sprintf("v1/%s/dashboard?%s", projectName, url.Values{"filter.eq.name": []string{name}}.Encode())
 
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {

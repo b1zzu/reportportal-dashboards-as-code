@@ -1,6 +1,9 @@
 package reportportal
 
-import "fmt"
+import (
+	"fmt"
+	"net/url"
+)
 
 type FilterService service
 
@@ -28,7 +31,7 @@ func (e *FilterNotFoundError) Error() string {
 }
 
 func (s *FilterService) GetByName(projectName, name string) (*Filter, *Response, error) {
-	u := fmt.Sprintf("v1/%s/filter?filter.eq.name=%s", projectName, name)
+	u := fmt.Sprintf("v1/%s/filter?%s", projectName, url.Values{"filter.eq.name": []string{name}}.Encode())
 
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
