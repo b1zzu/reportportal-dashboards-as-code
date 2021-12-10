@@ -25,16 +25,9 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 
 	widgets := make([]*Widget, len(d.Widgets))
 
-	ps, _, err := r.client.ProjectSettings.Get(project)
+	decodeSubTypesMap, err := r.decodeSubTypseMap(project)
 	if err != nil {
 		return nil, err
-	}
-
-	subTypesMap := make(map[string]string)
-	for _, g := range ps.SubTypes {
-		for _, t := range g {
-			subTypesMap[t.Locator] = t.ShortName
-		}
 	}
 
 	// retrieve all widgets definitions
@@ -44,7 +37,7 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetID, project, err)
 		}
 
-		widgets[i], err = ToWidget(w, dw, subTypesMap)
+		widgets[i], err = ToWidget(w, dw, decodeSubTypesMap)
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +69,11 @@ func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 		}
 	}
 
+	encodeSubTypesMap, err := r.encodeSubTypseMap(project)
+	if err != nil {
+		return err
+	}
+
 	dashboardID, _, err := r.client.Dashboard.Create(project, &reportportal.NewDashboard{Name: d.Name, Share: true})
 	if err != nil {
 		return fmt.Errorf("error creating dashboard %s: %w", d.Name, err)
@@ -84,7 +82,10 @@ func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
 	for _, w := range d.Widgets {
 
-		nw, dw := FromWidget(dashboardHash, w, filtersMap)
+		nw, dw, err := FromWidget(dashboardHash, w, filtersMap, encodeSubTypesMap)
+		if err != nil {
+			return fmt.Errorf("error converting widget %s: %w", w.Name, err)
+		}
 
 		widgetID, _, err := r.client.Widget.Post(project, nw)
 		if err != nil {
@@ -125,4 +126,34 @@ func (r *ReportPortal) DeleteDashboard(project, dashboard string) error {
 
 	// Widgets are deleted automatically if not used buy any dashboard
 	return nil
+}
+
+func (r *ReportPortal) decodeSubTypseMap(project string) (map[string]string, error) {
+	ps, _, err := r.client.ProjectSettings.Get(project)
+	if err != nil {
+		return nil, err
+	}
+
+	decodeMap := make(map[string]string)
+	for _, g := range ps.SubTypes {
+		for _, t := range g {
+			decodeMap[t.Locator] = t.ShortName
+		}
+	}
+	return decodeMap, nil
+}
+
+func (r *ReportPortal) encodeSubTypseMap(project string) (map[string]string, error) {
+
+	m, err := r.decodeSubTypseMap(project)
+	if err != nil {
+		return nil, err
+	}
+
+	// the decode map is the inverse of the encode
+	encodeMap := make(map[string]string)
+	for k, v := range m {
+		encodeMap[v] = k
+	}
+	return encodeMap, nil
 }

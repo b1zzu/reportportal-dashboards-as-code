@@ -1,21 +1,5 @@
 name: MK E2E Tests Overview
 widgets:
-- name: Unique bugs [Last 7 days]
-  description: ""
-  widgettype: uniqueBugTable
-  widgetsize:
-    width: 12
-    height: 7
-  widgetposition:
-    positionx: 0
-    positiony: 44
-  filters:
-  - mk-e2e-test-suite
-  contentparameters:
-    contentfields: []
-    itemscount: 168
-    widgetoptions:
-      latest: false
 - name: Failed/Skipped/Passed [Last 7 days]
   description: ""
   widgettype: statisticTrend
@@ -37,35 +21,22 @@ widgets:
       timeline: launch
       viewMode: bar
       zoom: false
-- name: Failed Reasons [Last 7 days]
+- name: Unique bugs [Last 7 days]
   description: ""
-  widgettype: statisticTrend
+  widgettype: uniqueBugTable
   widgetsize:
     width: 12
-    height: 6
+    height: 7
   widgetposition:
     positionx: 0
-    positiony: 19
+    positiony: 44
   filters:
   - mk-e2e-test-suite
   contentparameters:
-    contentfields:
-    - statistics$defects$product_bug$pb001
-    - statistics$defects$system_issue$si001
-    - statistics$defects$no_defect$nd001
-    - statistics$defects$to_investigate$ti001
-    - statistics$defects$system_issue$si_1iuqflmhg6hk6
-    - statistics$defects$product_bug$pb_qdy9r7uu9q9g
-    - statistics$defects$system_issue$si_1h7o519q5xeg5
-    - statistics$defects$automation_bug$ab_uv8mlzz5fqzn
-    - statistics$defects$automation_bug$ab_1ien71b1ve81k
-    - statistics$defects$automation_bug$ab001
-    - statistics$defects$automation_bug$ab_t4f3ctreg3sl
+    contentfields: []
     itemscount: 168
     widgetoptions:
-      timeline: launch
-      viewMode: bar
-      zoom: false
+      latest: false
 - name: Failed reason [Last 24h]
   description: ""
   widgettype: statisticTrend
@@ -79,18 +50,47 @@ widgets:
   - mk-e2e-test-suite
   contentparameters:
     contentfields:
-    - statistics$defects$product_bug$pb001
-    - statistics$defects$automation_bug$ab001
-    - statistics$defects$system_issue$si001
-    - statistics$defects$no_defect$nd001
-    - statistics$defects$to_investigate$ti001
-    - statistics$defects$system_issue$si_1iuqflmhg6hk6
-    - statistics$defects$product_bug$pb_qdy9r7uu9q9g
-    - statistics$defects$system_issue$si_1h7o519q5xeg5
-    - statistics$defects$automation_bug$ab_uv8mlzz5fqzn
-    - statistics$defects$automation_bug$ab_1ien71b1ve81k
-    - statistics$defects$automation_bug$ab_t4f3ctreg3sl
+    - statistics$defects$product_bug$PB
+    - statistics$defects$automation_bug$AB
+    - statistics$defects$system_issue$SI
+    - statistics$defects$no_defect$ND
+    - statistics$defects$to_investigate$TI
+    - statistics$defects$system_issue$KCC
+    - statistics$defects$product_bug$KUH
+    - statistics$defects$system_issue$EPB
+    - statistics$defects$automation_bug$PBC
+    - statistics$defects$automation_bug$SBC
+    - statistics$defects$automation_bug$UK
     itemscount: 24
+    widgetoptions:
+      timeline: launch
+      viewMode: bar
+      zoom: false
+- name: Failed Reasons [Last 7 days]
+  description: ""
+  widgettype: statisticTrend
+  widgetsize:
+    width: 12
+    height: 6
+  widgetposition:
+    positionx: 0
+    positiony: 19
+  filters:
+  - mk-e2e-test-suite
+  contentparameters:
+    contentfields:
+    - statistics$defects$product_bug$PB
+    - statistics$defects$system_issue$SI
+    - statistics$defects$no_defect$ND
+    - statistics$defects$to_investigate$TI
+    - statistics$defects$system_issue$KCC
+    - statistics$defects$product_bug$KUH
+    - statistics$defects$system_issue$EPB
+    - statistics$defects$automation_bug$PBC
+    - statistics$defects$automation_bug$SBC
+    - statistics$defects$automation_bug$AB
+    - statistics$defects$automation_bug$UK
+    itemscount: 168
     widgetoptions:
       timeline: launch
       viewMode: bar
@@ -130,21 +130,37 @@ widgets:
     - statistics$executions$passed
     - statistics$executions$failed
     - statistics$executions$skipped
-    - statistics$defects$product_bug$pb001
-    - statistics$defects$product_bug$pb_qdy9r7uu9q9g
-    - statistics$defects$automation_bug$ab001
-    - statistics$defects$system_issue$si001
-    - statistics$defects$system_issue$si_1iuqflmhg6hk6
-    - statistics$defects$no_defect$nd001
-    - statistics$defects$to_investigate$ti001
-    - statistics$defects$system_issue$si_1h7o519q5xeg5
-    - statistics$defects$automation_bug$ab_uv8mlzz5fqzn
-    - statistics$defects$automation_bug$ab_1ien71b1ve81k
-    - statistics$defects$automation_bug$ab_t4f3ctreg3sl
+    - statistics$defects$product_bug$PB
+    - statistics$defects$product_bug$KUH
+    - statistics$defects$automation_bug$AB
+    - statistics$defects$system_issue$SI
+    - statistics$defects$system_issue$KCC
+    - statistics$defects$no_defect$ND
+    - statistics$defects$to_investigate$TI
+    - statistics$defects$system_issue$EPB
+    - statistics$defects$automation_bug$PBC
+    - statistics$defects$automation_bug$SBC
+    - statistics$defects$automation_bug$UK
     itemscount: 168
     widgetoptions:
       latest: false
       viewMode: panel
+- name: Flaky Tests [Last 7 days]
+  description: ""
+  widgettype: flakyTestCases
+  widgetsize:
+    width: 6
+    height: 7
+  widgetposition:
+    positionx: 0
+    positiony: 37
+  filters: []
+  contentparameters:
+    contentfields: []
+    itemscount: 168
+    widgetoptions:
+      includeMethods: false
+      launchNameFilter: mk-e2e-test-suite
 - name: Launches duration [Last 7 days]
   description: ""
   widgettype: launchesDurationChart
@@ -166,18 +182,19 @@ widgets:
     itemscount: 168
     widgetoptions:
       latest: false
-- name: Flaky Tests [Last 7 days]
+- name: Most failed Tests [Last 7 days]
   description: ""
-  widgettype: flakyTestCases
+  widgettype: topTestCases
   widgetsize:
     width: 6
     height: 7
   widgetposition:
-    positionx: 0
+    positionx: 6
     positiony: 37
   filters: []
   contentparameters:
-    contentfields: []
+    contentfields:
+    - statistics$executions$failed
     itemscount: 168
     widgetoptions:
       includeMethods: false
@@ -199,23 +216,6 @@ widgets:
     itemscount: 504
     widgetoptions:
       timeline: day
-- name: Most failed Tests [Last 7 days]
-  description: ""
-  widgettype: topTestCases
-  widgetsize:
-    width: 6
-    height: 7
-  widgetposition:
-    positionx: 6
-    positiony: 37
-  filters: []
-  contentparameters:
-    contentfields:
-    - statistics$executions$failed
-    itemscount: 168
-    widgetoptions:
-      includeMethods: false
-      launchNameFilter: mk-e2e-test-suite
 - name: Passed Test Rate [Last 7 days]
   description: ""
   widgettype: passingRateSummary
@@ -251,16 +251,16 @@ widgets:
     - statistics$executions$passed
     - statistics$executions$failed
     - statistics$executions$skipped
-    - statistics$defects$product_bug$pb001
-    - statistics$defects$automation_bug$ab001
-    - statistics$defects$system_issue$si001
-    - statistics$defects$no_defect$nd001
-    - statistics$defects$to_investigate$ti001
-    - statistics$defects$system_issue$si_1iuqflmhg6hk6
-    - statistics$defects$product_bug$pb_qdy9r7uu9q9g
-    - statistics$defects$system_issue$si_1h7o519q5xeg5
-    - statistics$defects$automation_bug$ab_uv8mlzz5fqzn
-    - statistics$defects$automation_bug$ab_1ien71b1ve81k
-    - statistics$defects$automation_bug$ab_t4f3ctreg3sl
+    - statistics$defects$product_bug$PB
+    - statistics$defects$automation_bug$AB
+    - statistics$defects$system_issue$SI
+    - statistics$defects$no_defect$ND
+    - statistics$defects$to_investigate$TI
+    - statistics$defects$system_issue$KCC
+    - statistics$defects$product_bug$KUH
+    - statistics$defects$system_issue$EPB
+    - statistics$defects$automation_bug$PBC
+    - statistics$defects$automation_bug$SBC
+    - statistics$defects$automation_bug$UK
     itemscount: 1
     widgetoptions: {}

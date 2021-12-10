@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
@@ -49,14 +48,13 @@ func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
 }
 
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
-func DecodeFieldsSubTypes(fields []string, subTypesMap map[string]string) ([]string, error) {
+func DecodeFieldsSubTypes(fields []string, decodeMap map[string]string) ([]string, error) {
 
 	result := make([]string, len(fields))
 	for j, f := range fields {
 		p := strings.Split(f, "$")
-		log.Printf("%+v", p)
 		if p[0] == "statistics" && p[1] == "defects" {
-			s, ok := subTypesMap[p[3]]
+			s, ok := decodeMap[p[3]]
 			if !ok {
 				return nil, fmt.Errorf("error finding a map for the field \"%s\"", f)
 			}
@@ -70,14 +68,22 @@ func DecodeFieldsSubTypes(fields []string, subTypesMap map[string]string) ([]str
 	return result, nil
 }
 
-func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, subTypesMap map[string]string) (*Widget, error) {
+// convert 'statistics$defects$system_issue$shortname' fields to 'statistics$defects$system_issue$xx_xxxxxxxxxxx'
+func EncodeFieldsSubTypes(fields []string, encodeMap map[string]string) ([]string, error) {
+
+	// because the encodeMap is the inverse of the decodeMap we can use the same
+	// function but with the inverted map to encode the fields
+	return DecodeFieldsSubTypes(fields, encodeMap)
+}
+
+func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, decodeSubTypesMap map[string]string) (*Widget, error) {
 
 	filters := make([]string, len(w.AppliedFilters))
 	for j, f := range w.AppliedFilters {
 		filters[j] = f.Name
 	}
 
-	fields, err := DecodeFieldsSubTypes(w.ContentParameters.ContentFields, subTypesMap)
+	fields, err := DecodeFieldsSubTypes(w.ContentParameters.ContentFields, decodeSubTypesMap)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding sub types in widget \"%s\": %w", w.Name, err)
 	}
@@ -93,11 +99,16 @@ func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, subTypes
 	}, nil
 }
 
-func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int) (*reportportal.NewWidget, *reportportal.DashboardWidget) {
+func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, encodeSubTypesMap map[string]string) (*reportportal.NewWidget, *reportportal.DashboardWidget, error) {
 
 	filters := make([]int, len(w.Filters))
 	for j, f := range w.Filters {
 		filters[j] = filtersMap[f]
+	}
+
+	fields, err := EncodeFieldsSubTypes(w.ContentParameters.ContentFields, encodeSubTypesMap)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error encoding sub types in widget \"%s\": %w", w.Name, err)
 	}
 
 	nw := &reportportal.NewWidget{
@@ -110,7 +121,7 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int) (*re
 		Filters:     filters,
 		ContentParameters: &reportportal.WidgetContentParameters{
 			ItemsCount:    w.ContentParameters.ItemsCount,
-			ContentFields: w.ContentParameters.ContentFields,
+			ContentFields: fields,
 			WidgetOptions: w.ContentParameters.WidgetOptions,
 		},
 	}
@@ -123,7 +134,7 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int) (*re
 		WidgetPosition: &reportportal.DashboardWidgetPosition{PositionX: w.WidgetPosition.PositionX, PositionY: w.WidgetPosition.PositionY},
 	}
 
-	return nw, dw
+	return nw, dw, nil
 }
 
 func LoadDashboardFromFile(file string) (*Dashboard, error) {
