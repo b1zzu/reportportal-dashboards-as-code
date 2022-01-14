@@ -164,26 +164,12 @@ func LoadDashboardFromFile(file string) (*Dashboard, error) {
 	return d, nil
 }
 
-func (d *Dashboard) ToYaml() ([]byte, error) {
-	b, err := yaml.Marshal(d)
-	if err != nil {
-		return []byte{}, fmt.Errorf("error marshal dashboard %s: %w", d.Name, err)
-	}
-	return b, nil
+func (d *Dashboard) GetName() string {
+	return d.Name
 }
 
-func (d *Dashboard) WriteToFile(file string) error {
-
-	y, err := d.ToYaml()
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(file, y, 0660)
-	if err != nil {
-		return fmt.Errorf("error writing yaml dashboard %s to file %s: %w", d.Name, file, err)
-	}
-	return nil
+func (d *Dashboard) GetKind() string {
+	return d.Kind
 }
 
 func (d *Dashboard) HashName() string {

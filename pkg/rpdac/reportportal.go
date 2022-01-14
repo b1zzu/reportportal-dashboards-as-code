@@ -46,6 +46,17 @@ func (r *ReportPortal) GetDashboard(project string, dashboardID int) (*Dashboard
 	return ToDashboard(d, widgets), nil
 }
 
+func (r *ReportPortal) GetFilter(project string, filterID int) (*Filter, error) {
+
+	// retireve the filter defintion
+	f, _, err := r.client.Filter.GetByID(project, filterID)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving filter %d from project %s: %w", filterID, project, err)
+	}
+
+	return ToFilter(f), nil
+}
+
 func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
 	dashboardHash := d.HashName()

@@ -12,10 +12,25 @@ type FilterList struct {
 }
 
 type Filter struct {
-	Share bool   `json:"share"`
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	// incomplete
+	Share       bool               `json:"share"`
+	ID          int                `json:"id"`
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Description string             `json:"description"`
+	Owner       string             `json:"onwer"`
+	Conditions  []*FilterCondition `json:"conditions"`
+	Orders      []*FilterOrder     `json:"orders"`
+}
+
+type FilterCondition struct {
+	Condition      string `json:"condition"`
+	FilteringField string `json:"filteringField"`
+	Value          string `json:"value"`
+}
+
+type FilterOrder struct {
+	IsAsc         bool   `json:"isAsc"`
+	SortingColumn string `json:"sortingColumn"`
 }
 
 type FilterNotFoundError struct {
@@ -28,6 +43,23 @@ func NewFilterNotFoundError(projectName, filterName string) *DashboardNotFoundEr
 
 func (e *FilterNotFoundError) Error() string {
 	return e.Message
+}
+
+func (s *FilterService) GetByID(projectName string, id int) (*Filter, *Response, error) {
+	u := fmt.Sprintf("v1/%s/filter/%d", projectName, id)
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	f := new(Filter)
+	resp, err := s.client.Do(req, f)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return f, resp, nil
 }
 
 func (s *FilterService) GetByName(projectName, name string) (*Filter, *Response, error) {
