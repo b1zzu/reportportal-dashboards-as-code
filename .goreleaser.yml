@@ -1,0 +1,14 @@
+project_name: rpdac
+
+nfpms:
+  - file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    description: A tooling to import and export Report Portal dashboards in YAML
+    bindir: /usr/bin
+    license: MIT
+    maintainer: Davide Bizzarri <david3bizzarri@gmail.com>
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/licenses/rpdac/LICENSE
+    formats:
+      - deb
+      - rpm
