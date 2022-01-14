@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
@@ -14,6 +15,7 @@ import (
 
 type Dashboard struct {
 	Name    string    `json:"name"`
+	Kind    string    `json:"kind"`
 	Widgets []*Widget `json:"widgets"`
 }
 
@@ -44,7 +46,7 @@ type WidgetContentParameters struct {
 }
 
 func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
-	return &Dashboard{Name: d.Name, Widgets: widgets}
+	return &Dashboard{Name: d.Name, Kind: "Dashboard", Widgets: widgets}
 }
 
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
@@ -148,6 +150,15 @@ func LoadDashboardFromFile(file string) (*Dashboard, error) {
 	err = yaml.Unmarshal(b, d)
 	if err != nil {
 		return nil, err
+	}
+
+	if d.Kind != "" && d.Kind != "Dashboard" {
+		return nil, fmt.Errorf("error invalid kind '%s' in file '%s'", d.Kind, file)
+	}
+
+	if d.Kind == "" {
+		log.Printf("warning: assuming kind 'Dashboard' for file '%s'", file)
+		d.Kind = "Dashboard"
 	}
 
 	return d, nil
