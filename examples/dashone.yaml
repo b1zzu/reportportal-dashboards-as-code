@@ -1,4 +1,5 @@
 name: MK E2E Tests Overview
+kind: Dashboard
 widgets:
 - name: Failed/Skipped/Passed [Last 7 days]
   description: ""

@@ -5,15 +5,17 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"gopkg.in/yaml.v2"
 )
 
+const DashboardKind = "Dashboard"
+
 type Dashboard struct {
 	Name    string    `json:"name"`
+	Kind    string    `json:"kind"`
 	Widgets []*Widget `json:"widgets"`
 }
 
@@ -44,7 +46,7 @@ type WidgetContentParameters struct {
 }
 
 func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
-	return &Dashboard{Name: d.Name, Widgets: widgets}
+	return &Dashboard{Name: d.Name, Kind: DashboardKind, Widgets: widgets}
 }
 
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
@@ -137,42 +139,22 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, enco
 	return nw, dw, nil
 }
 
-func LoadDashboardFromFile(file string) (*Dashboard, error) {
-
-	b, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
+func LoadDashboardFromFile(file []byte) (*Dashboard, error) {
 
 	d := new(Dashboard)
-	err = yaml.Unmarshal(b, d)
+	err := yaml.Unmarshal(file, d)
 	if err != nil {
 		return nil, err
 	}
-
 	return d, nil
 }
 
-func (d *Dashboard) ToYaml() ([]byte, error) {
-	b, err := yaml.Marshal(d)
-	if err != nil {
-		return []byte{}, fmt.Errorf("error marshal dashboard %s: %w", d.Name, err)
-	}
-	return b, nil
+func (d *Dashboard) GetName() string {
+	return d.Name
 }
 
-func (d *Dashboard) WriteToFile(file string) error {
-
-	y, err := d.ToYaml()
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(file, y, 0660)
-	if err != nil {
-		return fmt.Errorf("error writing yaml dashboard %s to file %s: %w", d.Name, file, err)
-	}
-	return nil
+func (d *Dashboard) GetKind() string {
+	return d.Kind
 }
 
 func (d *Dashboard) HashName() string {

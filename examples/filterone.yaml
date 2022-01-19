@@ -1,0 +1,13 @@
+name: mk-e2e-test-suite-sandbox
+kind: Filter
+type: Launch
+description: ""
+conditions:
+- filteringfield: name
+  condition: eq
+  value: mk-e2e-test-suite-sandbox
+orders:
+- sortingcolumn: startTime
+  isasc: false
+- sortingcolumn: number
+  isasc: false

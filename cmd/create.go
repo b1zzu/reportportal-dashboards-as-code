@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/rpdac"
 	"github.com/spf13/cobra"
 )
@@ -11,12 +13,17 @@ var (
 
 	createCmd = &cobra.Command{
 		Use:   "create",
-		Short: "create ReportPortal dashboard from a YAML definition",
+		Short: "create ReportPortal object from a YAML definition",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			d, err := rpdac.LoadDashboardFromFile(createFile)
+			file, err := rpdac.LoadFile(createFile)
 			if err != nil {
 				return err
+			}
+
+			object, err := rpdac.LoadObjectFromFile(file)
+			if err != nil {
+				return fmt.Errorf("error loading '%s': %w", createFile, err)
 			}
 
 			c, err := requireReportPortalClient()
@@ -26,9 +33,34 @@ var (
 
 			r := rpdac.NewReportPortal(c)
 
-			err = r.CreateDashboard(createProject, d)
-			if err != nil {
-				return err
+			switch object.Kind {
+			case rpdac.DashboardKind:
+
+				d, err := rpdac.LoadDashboardFromFile(file)
+				if err != nil {
+					return err
+				}
+
+				err = r.CreateDashboard(createProject, d)
+				if err != nil {
+					return err
+				}
+
+			case rpdac.FilterKind:
+
+				f, err := rpdac.LoadFilterFromFile(file)
+				if err != nil {
+					return err
+				}
+
+				err = r.CreateFilter(createProject, f)
+				if err != nil {
+					return err
+				}
+
+			default:
+				return fmt.Errorf("unknown Kind '%s' in file '%s'", object.Kind, createFile)
+
 			}
 
 			return nil
