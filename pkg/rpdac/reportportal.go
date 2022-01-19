@@ -115,6 +115,17 @@ func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 	return nil
 }
 
+func (r *ReportPortal) CreateFilter(project string, f *Filter) error {
+
+	filterID, _, err := r.client.Filter.Create(project, FromFilter(f))
+	if err != nil {
+		return fmt.Errorf("error creating filter %s: %w", f.Name, err)
+	}
+
+	log.Printf("filter %s created with id: %d", f.Name, filterID)
+	return nil
+}
+
 // Delete the Dashboard with the given name and Widgets created for it
 func (r *ReportPortal) DeleteDashboard(project, dashboard string) error {
 

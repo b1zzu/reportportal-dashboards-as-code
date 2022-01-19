@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"log"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"gopkg.in/yaml.v2"
 )
+
+const DashboardKind = "Dashboard"
 
 type Dashboard struct {
 	Name    string    `json:"name"`
@@ -46,7 +46,7 @@ type WidgetContentParameters struct {
 }
 
 func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
-	return &Dashboard{Name: d.Name, Kind: "Dashboard", Widgets: widgets}
+	return &Dashboard{Name: d.Name, Kind: DashboardKind, Widgets: widgets}
 }
 
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
@@ -139,28 +139,13 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, enco
 	return nw, dw, nil
 }
 
-func LoadDashboardFromFile(file string) (*Dashboard, error) {
-
-	b, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
+func LoadDashboardFromFile(file []byte) (*Dashboard, error) {
 
 	d := new(Dashboard)
-	err = yaml.Unmarshal(b, d)
+	err := yaml.Unmarshal(file, d)
 	if err != nil {
 		return nil, err
 	}
-
-	if d.Kind != "" && d.Kind != "Dashboard" {
-		return nil, fmt.Errorf("error invalid kind '%s' in file '%s'", d.Kind, file)
-	}
-
-	if d.Kind == "" {
-		log.Printf("warning: assuming kind 'Dashboard' for file '%s'", file)
-		d.Kind = "Dashboard"
-	}
-
 	return d, nil
 }
 

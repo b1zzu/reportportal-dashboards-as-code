@@ -37,6 +37,15 @@ type FilterNotFoundError struct {
 	Message string
 }
 
+type NewFilter struct {
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Description string             `json:"description"`
+	Share       bool               `json:"share"`
+	Conditions  []*FilterCondition `json:"conditions"`
+	Orders      []*FilterOrder     `json:"orders"`
+}
+
 func NewFilterNotFoundError(projectName, filterName string) *DashboardNotFoundError {
 	return &DashboardNotFoundError{Message: fmt.Sprintf("error filter with name \"%s\" in project \"%s\" not found", filterName, projectName)}
 }
@@ -81,4 +90,21 @@ func (s *FilterService) GetByName(projectName, name string) (*Filter, *Response,
 	}
 
 	return fl.Content[0], resp, nil
+}
+
+func (s *FilterService) Create(projectName string, f *NewFilter) (int, *Response, error) {
+	u := fmt.Sprintf("v1/%v/filter", projectName)
+
+	req, err := s.client.NewRequest("POST", u, f)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	e := new(EntryCreated)
+	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return 0, resp, err
+	}
+
+	return e.ID, resp, nil
 }

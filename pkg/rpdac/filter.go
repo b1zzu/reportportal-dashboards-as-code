@@ -1,6 +1,11 @@
 package rpdac
 
-import "github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
+import (
+	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
+	"gopkg.in/yaml.v2"
+)
+
+const FilterKind = "Filter"
 
 type Filter struct {
 	Name        string             `json:"name"`
@@ -34,7 +39,32 @@ func ToFilter(f *reportportal.Filter) *Filter {
 		orders[i] = &FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
 	}
 
-	return &Filter{Name: f.Name, Kind: "Filter", Type: f.Type, Description: f.Description, Conditions: conditions, Orders: orders}
+	return &Filter{Name: f.Name, Kind: FilterKind, Type: f.Type, Description: f.Description, Conditions: conditions, Orders: orders}
+}
+
+func FromFilter(f *Filter) *reportportal.NewFilter {
+
+	conditions := make([]*reportportal.FilterCondition, len(f.Conditions))
+	for i, c := range f.Conditions {
+		conditions[i] = &reportportal.FilterCondition{Condition: c.Condition, FilteringField: c.FilteringField, Value: c.Value}
+	}
+
+	orders := make([]*reportportal.FilterOrder, len(f.Orders))
+	for i, o := range f.Orders {
+		orders[i] = &reportportal.FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
+	}
+
+	return &reportportal.NewFilter{Name: f.Name, Type: f.Type, Description: f.Description, Share: true, Conditions: conditions, Orders: orders}
+}
+
+func LoadFilterFromFile(file []byte) (*Filter, error) {
+
+	f := new(Filter)
+	err := yaml.Unmarshal(file, f)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 func (f *Filter) GetName() string {
