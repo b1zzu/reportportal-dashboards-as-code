@@ -12,11 +12,12 @@ type DashboardList struct {
 }
 
 type Dashboard struct {
-	Owner   string             `json:"owner"`
-	Share   bool               `json:"share"`
-	ID      int                `json:"id"`
-	Name    string             `json:"name"`
-	Widgets []*DashboardWidget `json:"widgets"`
+	Owner       string             `json:"owner"`
+	Share       bool               `json:"share"`
+	ID          int                `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Widgets     []*DashboardWidget `json:"widgets"`
 }
 
 type DashboardWidget struct {
@@ -39,6 +40,12 @@ type DashboardWidgetPosition struct {
 }
 
 type NewDashboard struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Share       bool   `json:"share"`
+}
+
+type UpdateDashboard struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Share       bool   `json:"share"`
@@ -115,6 +122,23 @@ func (s *DashboardService) Create(projectName string, d *NewDashboard) (int, *Re
 	return e.ID, resp, nil
 }
 
+func (s *DashboardService) Update(projectName string, dashboardID int, d *UpdateDashboard) (string, *Response, error) {
+	u := fmt.Sprintf("v1/%v/dashboard/%d", projectName, dashboardID)
+
+	req, err := s.client.NewRequest("PUT", u, d)
+	if err != nil {
+		return "", nil, err
+	}
+
+	c := new(OperationCompletion)
+	resp, err := s.client.Do(req, c)
+	if err != nil {
+		return "", resp, err
+	}
+
+	return c.Message, resp, nil
+}
+
 func (s *DashboardService) Delete(projectName string, id int) (string, *Response, error) {
 	u := fmt.Sprintf("v1/%s/dashboard/%d", projectName, id)
 
@@ -136,6 +160,23 @@ func (s *DashboardService) AddWidget(projectName string, dashboardID int, w *Das
 	u := fmt.Sprintf("v1/%v/dashboard/%d/add", projectName, dashboardID)
 
 	req, err := s.client.NewRequest("PUT", u, &DashboardAddWidget{AddWidget: w})
+	if err != nil {
+		return "", nil, err
+	}
+
+	e := new(OperationCompletion)
+	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return "", resp, err
+	}
+
+	return e.Message, resp, nil
+}
+
+func (s *DashboardService) RemoveWidget(projectName string, dashboardID int, widgetID int) (string, *Response, error) {
+	u := fmt.Sprintf("v1/%v/dashboard/%d/%d", projectName, dashboardID, widgetID)
+
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return "", nil, err
 	}

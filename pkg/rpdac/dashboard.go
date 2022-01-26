@@ -5,18 +5,23 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
+	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/util"
 	"gopkg.in/yaml.v2"
 )
 
 const DashboardKind = "Dashboard"
 
 type Dashboard struct {
-	Name    string    `json:"name"`
-	Kind    string    `json:"kind"`
-	Widgets []*Widget `json:"widgets"`
+	Kind        string    `json:"kind"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Widgets     []*Widget `json:"widgets"`
+
+	origin *reportportal.Dashboard
 }
 
 type Widget struct {
@@ -27,6 +32,8 @@ type Widget struct {
 	WidgetPosition    *WidgetPosition          `json:"widgetPosition"`
 	Filters           []string                 `json:"filters"`
 	ContentParameters *WidgetContentParameters `json:"contentParameters"`
+
+	origin *reportportal.Widget
 }
 
 type WidgetSize struct {
@@ -46,7 +53,14 @@ type WidgetContentParameters struct {
 }
 
 func ToDashboard(d *reportportal.Dashboard, widgets []*Widget) *Dashboard {
-	return &Dashboard{Name: d.Name, Kind: DashboardKind, Widgets: widgets}
+
+	return &Dashboard{
+		Kind:        DashboardKind,
+		Name:        d.Name,
+		Description: d.Description,
+		Widgets:     widgets,
+		origin:      d,
+	}
 }
 
 // convert 'statistics$defects$system_issue$xx_xxxxxxxxxxx' fields to 'statistics$defects$system_issue$shortname`
@@ -78,7 +92,9 @@ func EncodeFieldsSubTypes(fields []string, encodeMap map[string]string) ([]strin
 	return DecodeFieldsSubTypes(fields, encodeMap)
 }
 
-func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, decodeSubTypesMap map[string]string) (*Widget, error) {
+func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, dashboardHash string, decodeSubTypesMap map[string]string) (*Widget, error) {
+
+	name := strings.TrimSuffix(w.Name, fmt.Sprintf(" #%s", dashboardHash))
 
 	filters := make([]string, len(w.AppliedFilters))
 	for j, f := range w.AppliedFilters {
@@ -91,13 +107,14 @@ func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, decodeSu
 	}
 
 	return &Widget{
-		Name:              w.Name,
+		Name:              name,
 		Description:       w.Description,
 		WidgetType:        w.WidgetType,
 		WidgetSize:        &WidgetSize{Width: dw.WidgetSize.Width, Height: dw.WidgetSize.Height},
 		WidgetPosition:    &WidgetPosition{PositionX: dw.WidgetPosition.PositionX, PositionY: dw.WidgetPosition.PositionY},
 		Filters:           filters,
 		ContentParameters: &WidgetContentParameters{ContentFields: fields, ItemsCount: w.ContentParameters.ItemsCount, WidgetOptions: w.ContentParameters.WidgetOptions},
+		origin:            w,
 	}, nil
 }
 
@@ -157,8 +174,101 @@ func (d *Dashboard) GetKind() string {
 	return d.Kind
 }
 
+func (left *Dashboard) Equals(o util.Comparable) bool {
+	if left == nil || o == nil {
+		return left == o
+	}
+
+	right, ok := o.(*Dashboard)
+	if !ok {
+		return false
+	}
+
+	if left.Name != right.Name || left.Description != right.Description {
+		return false
+	}
+
+	if left.Widgets == nil || right.Widgets == nil {
+		return left.Widgets == nil && right.Widgets == nil
+	}
+
+	leftWidgets := make([]util.Comparable, len(left.Widgets))
+	for i := range left.Widgets {
+		leftWidgets[i] = left.Widgets[i]
+	}
+
+	rightWidgets := make([]util.Comparable, len(right.Widgets))
+	for i := range right.Widgets {
+		rightWidgets[i] = right.Widgets[i]
+	}
+
+	return util.CompareSlices(leftWidgets, rightWidgets)
+}
+
+func (d *Dashboard) Key() string {
+	return d.Name
+}
+
+func (left *Widget) Equals(o util.Comparable) bool {
+	if left == nil || o == nil {
+		return left == o
+	}
+
+	right, ok := o.(*Widget)
+	if !ok {
+		return false
+	}
+
+	return left.Name == right.Name &&
+		left.Description == right.Description &&
+		left.WidgetType == right.WidgetType &&
+		left.WidgetSize.Equals(right.WidgetSize) &&
+		util.CompareStringSlices(left.Filters, right.Filters) &&
+		left.WidgetPosition.Equals(right.WidgetPosition) &&
+		left.ContentParameters.Equals(right.ContentParameters)
+}
+
+func (d *Widget) Key() string {
+	return d.Name
+}
+
+func (left *WidgetSize) Equals(right *WidgetSize) bool {
+
+	if left == nil || right == nil {
+		return left == right
+	}
+
+	return left.Height == right.Height &&
+		left.Width == right.Width
+}
+
+func (left *WidgetPosition) Equals(right *WidgetPosition) bool {
+
+	if left == nil || right == nil {
+		return left == right
+	}
+
+	return left.PositionX == right.PositionX &&
+		left.PositionY == right.PositionY
+}
+
+func (left *WidgetContentParameters) Equals(right *WidgetContentParameters) bool {
+
+	if left == nil || right == nil {
+		return left == right
+	}
+
+	return util.CompareStringSlices(left.ContentFields, right.ContentFields) &&
+		left.ItemsCount == right.ItemsCount &&
+		reflect.DeepEqual(right.WidgetOptions, left.WidgetOptions)
+}
+
 func (d *Dashboard) HashName() string {
+	return HashName(d.Name)
+}
+
+func HashName(name string) string {
 	h := sha1.New()
-	io.WriteString(h, d.Name)
+	io.WriteString(h, name)
 	return hex.EncodeToString(h.Sum(nil))[:4]
 }
