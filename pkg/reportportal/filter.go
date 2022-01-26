@@ -17,7 +17,7 @@ type Filter struct {
 	Name        string             `json:"name"`
 	Type        string             `json:"type"`
 	Description string             `json:"description"`
-	Owner       string             `json:"onwer"`
+	Owner       string             `json:"owner"`
 	Conditions  []*FilterCondition `json:"conditions"`
 	Orders      []*FilterOrder     `json:"orders"`
 }

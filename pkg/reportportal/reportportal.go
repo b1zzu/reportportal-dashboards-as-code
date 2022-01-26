@@ -3,6 +3,7 @@ package reportportal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,6 +35,9 @@ type service struct {
 }
 
 func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
+	if baseURL == "" {
+		return nil, errors.New("baseURL is empty")
+	}
 	if httpClient == nil {
 		httpClient = &http.Client{}
 	}
