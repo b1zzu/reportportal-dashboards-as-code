@@ -48,15 +48,15 @@ var (
 
 			case rpdac.FilterKind:
 
-				_, err := rpdac.LoadFilterFromFile(file)
+				f, err := rpdac.LoadFilterFromFile(file)
 				if err != nil {
 					return err
 				}
 
-				// err = r.ApplyFilter(createProject, f)
-				// if err != nil {
-				// 	return err
-				// }
+				err = r.ApplyFilter(applyProject, f)
+				if err != nil {
+					return err
+				}
 
 			default:
 				return fmt.Errorf("unknown Kind '%s' in file '%s'", object.Kind, createFile)

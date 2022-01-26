@@ -46,8 +46,17 @@ type NewFilter struct {
 	Orders      []*FilterOrder     `json:"orders"`
 }
 
-func NewFilterNotFoundError(projectName, filterName string) *DashboardNotFoundError {
-	return &DashboardNotFoundError{Message: fmt.Sprintf("error filter with name \"%s\" in project \"%s\" not found", filterName, projectName)}
+type UpdateFilter struct {
+	Name        string             `json:"name"`
+	Type        string             `json:"type"`
+	Description string             `json:"description"`
+	Share       bool               `json:"share"`
+	Conditions  []*FilterCondition `json:"conditions"`
+	Orders      []*FilterOrder     `json:"orders"`
+}
+
+func NewFilterNotFoundError(projectName, filterName string) *FilterNotFoundError {
+	return &FilterNotFoundError{Message: fmt.Sprintf("error filter with name \"%s\" in project \"%s\" not found", filterName, projectName)}
 }
 
 func (e *FilterNotFoundError) Error() string {
@@ -107,4 +116,21 @@ func (s *FilterService) Create(projectName string, f *NewFilter) (int, *Response
 	}
 
 	return e.ID, resp, nil
+}
+
+func (s *FilterService) Update(projectName string, id int, f *UpdateFilter) (string, *Response, error) {
+	u := fmt.Sprintf("v1/%v/filter/%d", projectName, id)
+
+	req, err := s.client.NewRequest("PUT", u, f)
+	if err != nil {
+		return "", nil, err
+	}
+
+	e := new(OperationCompletion)
+	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return "", resp, err
+	}
+
+	return e.Message, resp, nil
 }

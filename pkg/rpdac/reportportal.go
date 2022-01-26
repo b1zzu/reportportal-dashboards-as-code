@@ -78,6 +78,20 @@ func (r *ReportPortal) GetDashboardByName(project, dashboardName string) (*Dashb
 	return r.loadDashboard(project, d)
 }
 
+func (r *ReportPortal) GetFilterByName(project, filterName string) (*Filter, error) {
+
+	f, _, err := r.client.Filter.GetByName(project, filterName)
+	if err != nil {
+		if _, ok := err.(*reportportal.FilterNotFoundError); ok {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return ToFilter(f), nil
+}
+
 func (r *ReportPortal) CreateDashboard(project string, d *Dashboard) error {
 
 	// resolve all filters
@@ -134,7 +148,7 @@ func (r *ReportPortal) createWidgets(
 
 func (r *ReportPortal) CreateFilter(project string, f *Filter) error {
 
-	filterID, _, err := r.client.Filter.Create(project, FromFilter(f))
+	filterID, _, err := r.client.Filter.Create(project, FilterToNewFilter(f))
 	if err != nil {
 		return fmt.Errorf("error creating filter %s: %w", f.Name, err)
 	}
@@ -168,24 +182,45 @@ func (r *ReportPortal) DeleteDashboard(project, dashboard string) error {
 }
 
 // Create or Recreate the dashboard
-func (r *ReportPortal) ApplyDashboard(project string, d *Dashboard) error {
+func (r *ReportPortal) ApplyDashboard(project string, targetDashboard *Dashboard) error {
 
-	currentDashboard, err := r.GetDashboardByName(project, d.Name)
+	currentDashboard, err := r.GetDashboardByName(project, targetDashboard.Name)
 	if err != nil {
-		return fmt.Errorf("error retrieving dashboard %s by name: %w", d.Name, err)
+		return fmt.Errorf("error retrieving dashboard \"%s\" by name: %w", targetDashboard.Name, err)
 	}
 
 	if currentDashboard != nil {
 
-		if currentDashboard.Equals(d) {
-			log.Printf("skip apply for dashboard with name: %s", d.Name)
+		if currentDashboard.Equals(targetDashboard) {
+			log.Printf("skip apply for dashboard \"%s\"", targetDashboard.Name)
 			return nil
 		}
 
-		return r.updateDashboard(project, currentDashboard, d)
+		return r.updateDashboard(project, currentDashboard, targetDashboard)
 	}
 
-	return r.CreateDashboard(project, d)
+	return r.CreateDashboard(project, targetDashboard)
+}
+
+func (r *ReportPortal) ApplyFilter(project string, targetFilter *Filter) error {
+
+	currentFilter, err := r.GetFilterByName(project, targetFilter.Name)
+	if err != nil {
+		return fmt.Errorf("error retrieving filter \"%s\" by name: %w", targetFilter.Name, err)
+	}
+
+	if currentFilter != nil {
+
+		if currentFilter.Equals(targetFilter) {
+			log.Printf("skip apply for filter \"%s\"", targetFilter.Name)
+			return nil
+		}
+
+		return r.updateFilter(project, currentFilter, targetFilter)
+	}
+
+	return r.CreateFilter(project, targetFilter)
+
 }
 
 func (r *ReportPortal) updateDashboard(project string, currentDashboard, targetDashboard *Dashboard) error {
@@ -219,6 +254,17 @@ func (r *ReportPortal) updateDashboard(project string, currentDashboard, targetD
 	log.Printf("updated \"%s\" dashboard", targetDashboard.Name)
 
 	return r.createWidgets(project, dashboardID, targetDashboard, filtersMap, encodeSubTypesMap)
+}
+
+func (r *ReportPortal) updateFilter(project string, currentFilter, targetFilter *Filter) error {
+
+	_, _, err := r.client.Filter.Update(project, currentFilter.origin.ID, FilterToUpdateFilter(targetFilter))
+	if err != nil {
+		return fmt.Errorf("error updating filter \"%s\": %w", targetFilter.Name, err)
+	}
+
+	log.Printf("update \"%s\" filter", targetFilter.Name)
+	return nil
 }
 
 func (r *ReportPortal) decodeSubTypseMap(project string) (map[string]string, error) {
