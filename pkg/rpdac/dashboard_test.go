@@ -17,7 +17,7 @@ func TestToDashboard(t *testing.T) {
 		Name:  "MK E2E Tests Overview",
 		Widgets: []reportportal.DashboardWidget{
 			{
-				WidgetName: "Failed/Skipped/Passed [Last 7 days] #74f9",
+				WidgetName: "Failed/Skipped/Passed [Last 7 days] #9eaf",
 				WidgetID:   3,
 				WidgetType: "statisticTrend",
 				WidgetSize: reportportal.DashboardWidgetSize{
@@ -31,7 +31,7 @@ func TestToDashboard(t *testing.T) {
 				Share: true,
 			},
 			{
-				WidgetName: "Unique bugs [Last 7 days] #74f9",
+				WidgetName: "Unique bugs [Last 7 days] #9eaf",
 				WidgetID:   67,
 				WidgetType: "uniqueBugTable",
 				WidgetSize: reportportal.DashboardWidgetSize{
@@ -125,7 +125,7 @@ func TestToWidget(t *testing.T) {
 		Owner:       "dbizzarr",
 		Share:       true,
 		ID:          3,
-		Name:        "Failed/Skipped/Passed [Last 7 days] #74f9",
+		Name:        "Failed/Skipped/Passed [Last 7 days] #9eaf",
 		WidgetType:  "statisticTrend",
 		ContentParameters: reportportal.WidgetContentParameters{
 			ContentFields: []string{
@@ -189,7 +189,7 @@ func TestToWidget(t *testing.T) {
 		"si_1iuqflmhg6hk6": "si",
 	}
 
-	got, err := ToWidget(inputWidget, inputDashboardWidget, "74f9", inputDecodeSubTypesMap)
+	got, err := ToWidget(inputWidget, inputDashboardWidget, "9eaf", inputDecodeSubTypesMap)
 	if err != nil {
 		t.Errorf("ToWidget returned error: %v", err)
 	}
@@ -253,7 +253,7 @@ func TestToWidget_WithoutDashboardHastag(t *testing.T) {
 		"si_1iuqflmhg6hk6": "si",
 	}
 
-	got, err := ToWidget(inputWidget, inputDashboardWidget, "74f9", inputDecodeSubTypesMap)
+	got, err := ToWidget(inputWidget, inputDashboardWidget, "9eaf", inputDecodeSubTypesMap)
 	if err != nil {
 		t.Errorf("ToWidget returned error: %v", err)
 	}
@@ -314,7 +314,7 @@ func TestFromWidget(t *testing.T) {
 		"si": "si_1iuqflmhg6hk6",
 	}
 
-	gotWidget, gotDashboardWidget, err := FromWidget("74f9", inputWidget, inputFilterMap, inputEncodeSubTypesMap)
+	gotWidget, gotDashboardWidget, err := FromWidget("9eaf", inputWidget, inputFilterMap, inputEncodeSubTypesMap)
 	if err != nil {
 		t.Errorf("ToWidget returned error: %v", err)
 	}
@@ -322,7 +322,7 @@ func TestFromWidget(t *testing.T) {
 	wantWidget := &reportportal.NewWidget{
 		Description: "",
 		Share:       true,
-		Name:        "Failed/Skipped/Passed [Last 7 days] #74f9",
+		Name:        "Failed/Skipped/Passed [Last 7 days] #9eaf",
 		WidgetType:  "statisticTrend",
 		ContentParameters: reportportal.WidgetContentParameters{
 			ContentFields: []string{
@@ -720,5 +720,16 @@ func TestWidgetEquals(t *testing.T) {
 				t.Errorf("expected '%t' but got '%t'", test.expexct, r)
 			}
 		})
+	}
+}
+
+func TestHashName(t *testing.T) {
+
+	input := "MK E2E Tests Overview"
+	got := HashName(input)
+
+	want := "9eaf"
+	if got != want {
+		t.Errorf("want %v but got %v", want, got)
 	}
 }
