@@ -12,21 +12,21 @@ type DashboardList struct {
 }
 
 type Dashboard struct {
-	Owner       string             `json:"owner"`
-	Share       bool               `json:"share"`
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Widgets     []*DashboardWidget `json:"widgets"`
+	Owner       string            `json:"owner"`
+	Share       bool              `json:"share"`
+	ID          int               `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Widgets     []DashboardWidget `json:"widgets"`
 }
 
 type DashboardWidget struct {
-	WidgetID       int                      `json:"widgetId"`
-	Share          bool                     `json:"share"`
-	WidgetName     string                   `json:"widgetName"`
-	WidgetType     string                   `json:"widgetType"`
-	WidgetSize     *DashboardWidgetSize     `json:"widgetSize"`
-	WidgetPosition *DashboardWidgetPosition `json:"widgetPosition"`
+	WidgetID       int                     `json:"widgetId"`
+	Share          bool                    `json:"share"`
+	WidgetName     string                  `json:"widgetName"`
+	WidgetType     string                  `json:"widgetType"`
+	WidgetSize     DashboardWidgetSize     `json:"widgetSize"`
+	WidgetPosition DashboardWidgetPosition `json:"widgetPosition"`
 }
 
 type DashboardWidgetSize struct {

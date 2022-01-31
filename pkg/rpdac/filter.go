@@ -53,21 +53,21 @@ func ToFilter(f *reportportal.Filter) *Filter {
 	}
 }
 
-func toFilterConditions(conditions []*FilterCondition) []*reportportal.FilterCondition {
+func toFilterConditions(conditions []*FilterCondition) []reportportal.FilterCondition {
 
-	r := make([]*reportportal.FilterCondition, len(conditions))
+	r := make([]reportportal.FilterCondition, len(conditions))
 	for i, c := range conditions {
-		r[i] = &reportportal.FilterCondition{Condition: c.Condition, FilteringField: c.FilteringField, Value: c.Value}
+		r[i] = reportportal.FilterCondition{Condition: c.Condition, FilteringField: c.FilteringField, Value: c.Value}
 	}
 
 	return r
 }
 
-func toFilterOrders(orders []*FilterOrder) []*reportportal.FilterOrder {
+func toFilterOrders(orders []*FilterOrder) []reportportal.FilterOrder {
 
-	r := make([]*reportportal.FilterOrder, len(orders))
+	r := make([]reportportal.FilterOrder, len(orders))
 	for i, o := range orders {
-		r[i] = &reportportal.FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
+		r[i] = reportportal.FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
 	}
 
 	return r

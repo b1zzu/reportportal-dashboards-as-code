@@ -58,7 +58,7 @@ func TestPojectSettingsGet(t *testing.T) {
 	want := &ProjectSettings{
 		ProjectID: 4,
 		SubTypes: IssueSubTypes{
-			"NO_DEFECT": []*IssueSubType{{
+			"NO_DEFECT": []IssueSubType{{
 				ID:        4,
 				Locator:   "nd001",
 				TypeRef:   "NO_DEFECT",
@@ -66,7 +66,7 @@ func TestPojectSettingsGet(t *testing.T) {
 				ShortName: "ND",
 				Color:     "#777777",
 			}},
-			"AUTOMATION_BUG": []*IssueSubType{{
+			"AUTOMATION_BUG": []IssueSubType{{
 				ID:        2,
 				Locator:   "ab001",
 				TypeRef:   "AUTOMATION_BUG",

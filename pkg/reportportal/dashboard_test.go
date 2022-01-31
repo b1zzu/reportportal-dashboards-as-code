@@ -64,16 +64,16 @@ func TestDashboardGetByID(t *testing.T) {
 		Share: true,
 		ID:    1,
 		Name:  "MK E2E Tests Overview",
-		Widgets: []*DashboardWidget{
+		Widgets: []DashboardWidget{
 			{
 				WidgetName: "Failed/Skipped/Passed",
 				WidgetID:   3,
 				WidgetType: "statisticTrend",
-				WidgetSize: &DashboardWidgetSize{
+				WidgetSize: DashboardWidgetSize{
 					Width:  12,
 					Height: 6,
 				},
-				WidgetPosition: &DashboardWidgetPosition{
+				WidgetPosition: DashboardWidgetPosition{
 					PositionX: 0,
 					PositionY: 13,
 				},
@@ -83,11 +83,11 @@ func TestDashboardGetByID(t *testing.T) {
 				WidgetName: "Unique bugs [Last 7 days]",
 				WidgetID:   67,
 				WidgetType: "uniqueBugTable",
-				WidgetSize: &DashboardWidgetSize{
+				WidgetSize: DashboardWidgetSize{
 					Width:  12,
 					Height: 7,
 				},
-				WidgetPosition: &DashboardWidgetPosition{
+				WidgetPosition: DashboardWidgetPosition{
 					PositionX: 0,
 					PositionY: 44,
 				},
@@ -253,11 +253,11 @@ func TestDashboardAddWidget(t *testing.T) {
 		WidgetName: "Failed/Skipped/Passed",
 		WidgetID:   3,
 		WidgetType: "statisticTrend",
-		WidgetSize: &DashboardWidgetSize{
+		WidgetSize: DashboardWidgetSize{
 			Width:  12,
 			Height: 6,
 		},
-		WidgetPosition: &DashboardWidgetPosition{
+		WidgetPosition: DashboardWidgetPosition{
 			PositionX: 0,
 			PositionY: 13,
 		},

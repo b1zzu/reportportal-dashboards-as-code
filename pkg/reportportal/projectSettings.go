@@ -9,7 +9,7 @@ type ProjectSettings struct {
 	SubTypes  IssueSubTypes `json:"subTypes"`
 }
 
-type IssueSubTypes map[string][]*IssueSubType
+type IssueSubTypes map[string][]IssueSubType
 
 type IssueSubType struct {
 	ID        int    `json:"id"`

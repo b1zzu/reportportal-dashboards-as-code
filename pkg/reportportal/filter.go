@@ -12,14 +12,14 @@ type FilterList struct {
 }
 
 type Filter struct {
-	Share       bool               `json:"share"`
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Owner       string             `json:"owner"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Share       bool              `json:"share"`
+	ID          int               `json:"id"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Owner       string            `json:"owner"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 }
 
 type FilterCondition struct {
@@ -38,21 +38,21 @@ type FilterNotFoundError struct {
 }
 
 type NewFilter struct {
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Share       bool               `json:"share"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Share       bool              `json:"share"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 }
 
 type UpdateFilter struct {
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Share       bool               `json:"share"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Share       bool              `json:"share"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 }
 
 func NewFilterNotFoundError(projectName, filterName string) *FilterNotFoundError {

@@ -101,7 +101,7 @@ func TestWidgetGet(t *testing.T) {
 		ID:          3,
 		Name:        "Failed/Skipped/Passed [Last 7 days]",
 		WidgetType:  "statisticTrend",
-		ContentParameters: &WidgetContentParameters{
+		ContentParameters: WidgetContentParameters{
 			ContentFields: []string{
 				"statistics$executions$passed",
 				"statistics$executions$failed",
@@ -114,20 +114,20 @@ func TestWidgetGet(t *testing.T) {
 				"viewMode": "bar",
 			},
 		},
-		AppliedFilters: []*Filter{
+		AppliedFilters: []Filter{
 			{
 				Owner: "dbizzarr",
 				Share: true,
 				ID:    2,
 				Name:  "mk-e2e-test-suite",
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{
 						FilteringField: "name",
 						Condition:      "eq",
 						Value:          "mk-e2e-test-suite",
 					},
 				},
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{
 						SortingColumn: "startTime",
 						IsAsc:         false,
@@ -159,7 +159,7 @@ func TestWidgetPost(t *testing.T) {
 		Description: "",
 		Share:       true,
 		WidgetType:  "statisticTrend",
-		ContentParameters: &WidgetContentParameters{
+		ContentParameters: WidgetContentParameters{
 			ContentFields: []string{
 				"statistics$executions$passed",
 				"statistics$executions$failed",

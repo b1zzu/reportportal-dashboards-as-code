@@ -138,7 +138,7 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, enco
 		Share:       true,
 		WidgetType:  w.WidgetType,
 		Filters:     filters,
-		ContentParameters: &reportportal.WidgetContentParameters{
+		ContentParameters: reportportal.WidgetContentParameters{
 			ItemsCount:    w.ContentParameters.ItemsCount,
 			ContentFields: fields,
 			WidgetOptions: w.ContentParameters.WidgetOptions,
@@ -149,8 +149,8 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, enco
 		Share:          true,
 		WidgetName:     w.Name,
 		WidgetType:     w.WidgetType,
-		WidgetSize:     &reportportal.DashboardWidgetSize{Width: w.WidgetSize.Width, Height: w.WidgetSize.Height},
-		WidgetPosition: &reportportal.DashboardWidgetPosition{PositionX: w.WidgetPosition.PositionX, PositionY: w.WidgetPosition.PositionY},
+		WidgetSize:     reportportal.DashboardWidgetSize{Width: w.WidgetSize.Width, Height: w.WidgetSize.Height},
+		WidgetPosition: reportportal.DashboardWidgetPosition{PositionX: w.WidgetPosition.PositionX, PositionY: w.WidgetPosition.PositionY},
 	}
 
 	return nw, dw, nil

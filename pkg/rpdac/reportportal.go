@@ -44,7 +44,7 @@ func (r *ReportPortal) loadDashboard(project string, d *reportportal.Dashboard) 
 			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetID, project, err)
 		}
 
-		widgets[i], err = ToWidget(w, dw, dashboardHash, decodeSubTypesMap)
+		widgets[i], err = ToWidget(w, &dw, dashboardHash, decodeSubTypesMap)
 		if err != nil {
 			return nil, err
 		}

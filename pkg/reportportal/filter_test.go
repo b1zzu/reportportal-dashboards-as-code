@@ -54,14 +54,14 @@ func TestFilterGetByID(t *testing.T) {
 		ID:          2,
 		Name:        "mk-e2e-test-suite",
 		Description: "test",
-		Conditions: []*FilterCondition{
+		Conditions: []FilterCondition{
 			{
 				FilteringField: "name",
 				Condition:      "eq",
 				Value:          "mk-e2e-test-suite",
 			},
 		},
-		Orders: []*FilterOrder{
+		Orders: []FilterOrder{
 			{
 				SortingColumn: "startTime",
 				IsAsc:         false,
@@ -135,14 +135,14 @@ func TestFilterCreate(t *testing.T) {
 		Share:       true,
 		Name:        "mk-e2e-test-suite",
 		Description: "test",
-		Conditions: []*FilterCondition{
+		Conditions: []FilterCondition{
 			{
 				FilteringField: "name",
 				Condition:      "eq",
 				Value:          "mk-e2e-test-suite",
 			},
 		},
-		Orders: []*FilterOrder{
+		Orders: []FilterOrder{
 			{
 				SortingColumn: "startTime",
 				IsAsc:         false,
@@ -188,14 +188,14 @@ func TestFilterUpdate(t *testing.T) {
 		Share:       true,
 		Name:        "mk-e2e-test-suite",
 		Description: "test",
-		Conditions: []*FilterCondition{
+		Conditions: []FilterCondition{
 			{
 				FilteringField: "name",
 				Condition:      "eq",
 				Value:          "mk-e2e-test-suite",
 			},
 		},
-		Orders: []*FilterOrder{
+		Orders: []FilterOrder{
 			{
 				SortingColumn: "startTime",
 				IsAsc:         false,
