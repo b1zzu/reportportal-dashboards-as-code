@@ -5,7 +5,358 @@ import (
 	"testing"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
+	"github.com/google/go-cmp/cmp"
 )
+
+func TestToDashboard(t *testing.T) {
+
+	inputDashboard := &reportportal.Dashboard{
+		Owner: "dbizzarr",
+		Share: true,
+		ID:    1,
+		Name:  "MK E2E Tests Overview",
+		Widgets: []reportportal.DashboardWidget{
+			{
+				WidgetName: "Failed/Skipped/Passed [Last 7 days] #74f9",
+				WidgetID:   3,
+				WidgetType: "statisticTrend",
+				WidgetSize: reportportal.DashboardWidgetSize{
+					Width:  12,
+					Height: 6,
+				},
+				WidgetPosition: reportportal.DashboardWidgetPosition{
+					PositionX: 0,
+					PositionY: 13,
+				},
+				Share: true,
+			},
+			{
+				WidgetName: "Unique bugs [Last 7 days] #74f9",
+				WidgetID:   67,
+				WidgetType: "uniqueBugTable",
+				WidgetSize: reportportal.DashboardWidgetSize{
+					Width:  12,
+					Height: 7,
+				},
+				WidgetPosition: reportportal.DashboardWidgetPosition{
+					PositionX: 0,
+					PositionY: 44,
+				},
+				Share: true,
+			},
+		},
+	}
+
+	inputWidgets := []*Widget{
+		{
+			Name:        "Failed/Skipped/Passed [Last 7 days]",
+			Description: "",
+			WidgetType:  "statisticTrend",
+			WidgetSize: WidgetSize{
+				Width:  12,
+				Height: 6,
+			},
+			WidgetPosition: WidgetPosition{
+				PositionX: 0,
+				PositionY: 13,
+			},
+			Filters: []string{"mk-e2e-test-suite"},
+			ContentParameters: WidgetContentParameters{
+				ContentFields: []string{
+					"statistics$executions$passed",
+					"statistics$executions$failed",
+					"statistics$executions$skipped",
+				},
+				ItemsCount: 168,
+				WidgetOptions: map[string]interface{}{
+					"timeline": "launch",
+					"viewMode": "bar",
+					"zoom":     false,
+				},
+			},
+			origin: &reportportal.Widget{},
+		},
+		{
+			Name:        "Unique bugs [Last 7 days]",
+			Description: "",
+			WidgetType:  "uniqueBugTable",
+			WidgetSize: WidgetSize{
+				Width:  12,
+				Height: 7,
+			},
+			WidgetPosition: WidgetPosition{
+				PositionX: 0,
+				PositionY: 44,
+			},
+			Filters: []string{"mk-e2e-test-suite"},
+			ContentParameters: WidgetContentParameters{
+				ContentFields: []string{},
+				ItemsCount:    168,
+				WidgetOptions: map[string]interface{}{
+					"latest": false,
+				},
+			},
+			origin: &reportportal.Widget{},
+		},
+	}
+
+	got := ToDashboard(inputDashboard, inputWidgets)
+
+	want := &Dashboard{
+		Kind:        DashboardKind,
+		Name:        "MK E2E Tests Overview",
+		Description: "",
+		Widgets:     inputWidgets,
+		origin:      inputDashboard,
+	}
+
+	opts := cmp.Options{
+		cmp.AllowUnexported(Dashboard{}, Widget{}),
+	}
+	if !cmp.Equal(got, want, opts) {
+		t.Errorf("ToDashboard got: %+v, want: %+v", got, want)
+	}
+}
+
+func TestToWidget(t *testing.T) {
+
+	inputWidget := &reportportal.Widget{
+		Description: "",
+		Owner:       "dbizzarr",
+		Share:       true,
+		ID:          3,
+		Name:        "Failed/Skipped/Passed [Last 7 days] #74f9",
+		WidgetType:  "statisticTrend",
+		ContentParameters: reportportal.WidgetContentParameters{
+			ContentFields: []string{
+				"statistics$executions$passed",
+				"statistics$executions$failed",
+				"statistics$executions$skipped",
+				"statistics$defects$system_issue$si_1iuqflmhg6hk6",
+			},
+			ItemsCount: 168,
+			WidgetOptions: map[string]interface{}{
+				"zoom":     false,
+				"timeline": "launch",
+				"viewMode": "bar",
+			},
+		},
+		AppliedFilters: []reportportal.Filter{
+			{
+				Owner: "dbizzarr",
+				Share: true,
+				ID:    2,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test-suite",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			},
+		},
+		Content: nil,
+	}
+
+	inputDashboardWidget := &reportportal.DashboardWidget{
+		WidgetName: "Failed/Skipped/Passed",
+		WidgetID:   3,
+		WidgetType: "statisticTrend",
+		WidgetSize: reportportal.DashboardWidgetSize{
+			Width:  12,
+			Height: 6,
+		},
+		WidgetPosition: reportportal.DashboardWidgetPosition{
+			PositionX: 0,
+			PositionY: 13,
+		},
+		Share: true,
+	}
+
+	inputDecodeSubTypesMap := map[string]string{
+		"si_1iuqflmhg6hk6": "si",
+	}
+
+	got, err := ToWidget(inputWidget, inputDashboardWidget, "74f9", inputDecodeSubTypesMap)
+	if err != nil {
+		t.Errorf("ToWidget returned error: %v", err)
+	}
+
+	want := &Widget{
+		Name:        "Failed/Skipped/Passed [Last 7 days]",
+		Description: "",
+		WidgetType:  "statisticTrend",
+		WidgetSize: WidgetSize{
+			Width:  12,
+			Height: 6,
+		},
+		WidgetPosition: WidgetPosition{
+			PositionX: 0,
+			PositionY: 13,
+		},
+		Filters: []string{"mk-e2e-test-suite"},
+		ContentParameters: WidgetContentParameters{
+			ContentFields: []string{
+				"statistics$executions$passed",
+				"statistics$executions$failed",
+				"statistics$executions$skipped",
+				"statistics$defects$system_issue$si",
+			},
+			ItemsCount: 168,
+			WidgetOptions: map[string]interface{}{
+				"timeline": "launch",
+				"viewMode": "bar",
+				"zoom":     false,
+			},
+		},
+		origin: inputWidget,
+	}
+
+	opts := cmp.Options{
+		cmp.AllowUnexported(Widget{}),
+	}
+	testDeepEqual(t, got, want, opts)
+}
+
+func TestToWidget_WithoutDashboardHastag(t *testing.T) {
+
+	inputWidget := &reportportal.Widget{
+		Description: "",
+		Owner:       "dbizzarr",
+		Share:       true,
+		ID:          3,
+		Name:        "Failed/Skipped/Passed [Last 7 days]",
+		WidgetType:  "statisticTrend",
+		Content:     nil,
+	}
+
+	inputDashboardWidget := &reportportal.DashboardWidget{
+		WidgetName: "Failed/Skipped/Passed",
+		WidgetID:   3,
+		WidgetType: "statisticTrend",
+		Share:      true,
+	}
+
+	inputDecodeSubTypesMap := map[string]string{
+		"si_1iuqflmhg6hk6": "si",
+	}
+
+	got, err := ToWidget(inputWidget, inputDashboardWidget, "74f9", inputDecodeSubTypesMap)
+	if err != nil {
+		t.Errorf("ToWidget returned error: %v", err)
+	}
+
+	want := &Widget{
+		Name:        "Failed/Skipped/Passed [Last 7 days]",
+		Description: "",
+		WidgetType:  "statisticTrend",
+		Filters:     []string{},
+		ContentParameters: WidgetContentParameters{
+			ContentFields: []string{},
+		},
+		origin: inputWidget,
+	}
+
+	opts := cmp.Options{
+		cmp.AllowUnexported(Widget{}),
+	}
+	testDeepEqual(t, got, want, opts)
+}
+
+func TestFromWidget(t *testing.T) {
+
+	inputWidget := &Widget{
+		Name:        "Failed/Skipped/Passed [Last 7 days]",
+		Description: "",
+		WidgetType:  "statisticTrend",
+		WidgetSize: WidgetSize{
+			Width:  12,
+			Height: 6,
+		},
+		WidgetPosition: WidgetPosition{
+			PositionX: 0,
+			PositionY: 13,
+		},
+		Filters: []string{"mk-e2e-test-suite"},
+		ContentParameters: WidgetContentParameters{
+			ContentFields: []string{
+				"statistics$executions$passed",
+				"statistics$executions$failed",
+				"statistics$executions$skipped",
+				"statistics$defects$system_issue$si",
+			},
+			ItemsCount: 168,
+			WidgetOptions: map[string]interface{}{
+				"timeline": "launch",
+				"viewMode": "bar",
+				"zoom":     false,
+			},
+		},
+		origin: nil,
+	}
+
+	inputFilterMap := map[string]int{
+		"mk-e2e-test-suite": 2,
+	}
+	inputEncodeSubTypesMap := map[string]string{
+		"si": "si_1iuqflmhg6hk6",
+	}
+
+	gotWidget, gotDashboardWidget, err := FromWidget("74f9", inputWidget, inputFilterMap, inputEncodeSubTypesMap)
+	if err != nil {
+		t.Errorf("ToWidget returned error: %v", err)
+	}
+
+	wantWidget := &reportportal.NewWidget{
+		Description: "",
+		Share:       true,
+		Name:        "Failed/Skipped/Passed [Last 7 days] #74f9",
+		WidgetType:  "statisticTrend",
+		ContentParameters: reportportal.WidgetContentParameters{
+			ContentFields: []string{
+				"statistics$executions$passed",
+				"statistics$executions$failed",
+				"statistics$executions$skipped",
+				"statistics$defects$system_issue$si_1iuqflmhg6hk6",
+			},
+			ItemsCount: 168,
+			WidgetOptions: map[string]interface{}{
+				"zoom":     false,
+				"timeline": "launch",
+				"viewMode": "bar",
+			},
+		},
+		Filters: []int{2},
+	}
+
+	wantDashboardWidget := &reportportal.DashboardWidget{
+		WidgetName: "Failed/Skipped/Passed [Last 7 days]",
+		WidgetType: "statisticTrend",
+		WidgetSize: reportportal.DashboardWidgetSize{
+			Width:  12,
+			Height: 6,
+		},
+		WidgetPosition: reportportal.DashboardWidgetPosition{
+			PositionX: 0,
+			PositionY: 13,
+		},
+		Share: true}
+
+	testDeepEqual(t, gotWidget, wantWidget)
+	testDeepEqual(t, gotDashboardWidget, wantDashboardWidget)
+}
 
 func TestDecodeFieldsSubTypes(t *testing.T) {
 
@@ -262,11 +613,11 @@ func TestWidgetEquals(t *testing.T) {
 			description: "Compare widgets with differt size should return false",
 			left: &Widget{
 				Name:       "Test",
-				WidgetSize: &WidgetSize{Width: 1, Height: 1},
+				WidgetSize: WidgetSize{Width: 1, Height: 1},
 			},
 			right: &Widget{
 				Name:       "Test",
-				WidgetSize: &WidgetSize{Width: 2, Height: 1},
+				WidgetSize: WidgetSize{Width: 2, Height: 1},
 			},
 			expexct: false,
 		},
@@ -274,11 +625,11 @@ func TestWidgetEquals(t *testing.T) {
 			description: "Compare widgets with differt position should return false",
 			left: &Widget{
 				Name:           "Test",
-				WidgetPosition: &WidgetPosition{PositionX: 4, PositionY: 9},
+				WidgetPosition: WidgetPosition{PositionX: 4, PositionY: 9},
 			},
 			right: &Widget{
 				Name:           "Test",
-				WidgetPosition: &WidgetPosition{PositionX: 7, PositionY: 9},
+				WidgetPosition: WidgetPosition{PositionX: 7, PositionY: 9},
 			},
 			expexct: false,
 		},
@@ -298,7 +649,7 @@ func TestWidgetEquals(t *testing.T) {
 			description: "Compare widgets with differt content parameters should return false",
 			left: &Widget{
 				Name: "Test",
-				ContentParameters: &WidgetContentParameters{
+				ContentParameters: WidgetContentParameters{
 					ContentFields: []string{"one"},
 					ItemsCount:    1,
 					WidgetOptions: map[string]interface{}{
@@ -310,7 +661,7 @@ func TestWidgetEquals(t *testing.T) {
 			},
 			right: &Widget{
 				Name: "Test",
-				ContentParameters: &WidgetContentParameters{
+				ContentParameters: WidgetContentParameters{
 					ContentFields: []string{"two"},
 					ItemsCount:    2,
 					WidgetOptions: map[string]interface{}{
@@ -328,10 +679,10 @@ func TestWidgetEquals(t *testing.T) {
 				Name:           "Test",
 				Description:    "My test description",
 				WidgetType:     "Test type",
-				WidgetSize:     &WidgetSize{Width: 1, Height: 1},
-				WidgetPosition: &WidgetPosition{PositionX: 4, PositionY: 9},
+				WidgetSize:     WidgetSize{Width: 1, Height: 1},
+				WidgetPosition: WidgetPosition{PositionX: 4, PositionY: 9},
 				Filters:        []string{"one", "two"},
-				ContentParameters: &WidgetContentParameters{
+				ContentParameters: WidgetContentParameters{
 					ContentFields: []string{"three", "one"},
 					ItemsCount:    1,
 					WidgetOptions: map[string]interface{}{
@@ -345,10 +696,10 @@ func TestWidgetEquals(t *testing.T) {
 				Name:           "Test",
 				Description:    "My test description",
 				WidgetType:     "Test type",
-				WidgetSize:     &WidgetSize{Width: 1, Height: 1},
-				WidgetPosition: &WidgetPosition{PositionX: 4, PositionY: 9},
+				WidgetSize:     WidgetSize{Width: 1, Height: 1},
+				WidgetPosition: WidgetPosition{PositionX: 4, PositionY: 9},
 				Filters:        []string{"two", "one"},
-				ContentParameters: &WidgetContentParameters{
+				ContentParameters: WidgetContentParameters{
 					ContentFields: []string{"one", "three"},
 					ItemsCount:    1,
 					WidgetOptions: map[string]interface{}{

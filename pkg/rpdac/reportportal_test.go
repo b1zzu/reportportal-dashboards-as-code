@@ -4,10 +4,20 @@ import (
 	"log"
 	"sort"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 type Tesso struct {
 	M int
+}
+
+func testDeepEqual(t *testing.T, got, want interface{}, opts ...cmp.Option) {
+	t.Helper()
+
+	if !cmp.Equal(got, want, opts...) {
+		t.Errorf("Want (+) but got (-): %s", cmp.Diff(got, want, opts...))
+	}
 }
 
 func TestDeepEqual(t *testing.T) {

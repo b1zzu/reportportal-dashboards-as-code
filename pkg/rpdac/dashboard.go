@@ -25,13 +25,13 @@ type Dashboard struct {
 }
 
 type Widget struct {
-	Name              string                   `json:"name"`
-	Description       string                   `json:"description"`
-	WidgetType        string                   `json:"widgetType"`
-	WidgetSize        *WidgetSize              `json:"widgetSize"`
-	WidgetPosition    *WidgetPosition          `json:"widgetPosition"`
-	Filters           []string                 `json:"filters"`
-	ContentParameters *WidgetContentParameters `json:"contentParameters"`
+	Name              string                  `json:"name"`
+	Description       string                  `json:"description"`
+	WidgetType        string                  `json:"widgetType"`
+	WidgetSize        WidgetSize              `json:"widgetSize"`
+	WidgetPosition    WidgetPosition          `json:"widgetPosition"`
+	Filters           []string                `json:"filters"`
+	ContentParameters WidgetContentParameters `json:"contentParameters"`
 
 	origin *reportportal.Widget
 }
@@ -110,10 +110,10 @@ func ToWidget(w *reportportal.Widget, dw *reportportal.DashboardWidget, dashboar
 		Name:              name,
 		Description:       w.Description,
 		WidgetType:        w.WidgetType,
-		WidgetSize:        &WidgetSize{Width: dw.WidgetSize.Width, Height: dw.WidgetSize.Height},
-		WidgetPosition:    &WidgetPosition{PositionX: dw.WidgetPosition.PositionX, PositionY: dw.WidgetPosition.PositionY},
+		WidgetSize:        WidgetSize{Width: dw.WidgetSize.Width, Height: dw.WidgetSize.Height},
+		WidgetPosition:    WidgetPosition{PositionX: dw.WidgetPosition.PositionX, PositionY: dw.WidgetPosition.PositionY},
 		Filters:           filters,
-		ContentParameters: &WidgetContentParameters{ContentFields: fields, ItemsCount: w.ContentParameters.ItemsCount, WidgetOptions: w.ContentParameters.WidgetOptions},
+		ContentParameters: WidgetContentParameters{ContentFields: fields, ItemsCount: w.ContentParameters.ItemsCount, WidgetOptions: w.ContentParameters.WidgetOptions},
 		origin:            w,
 	}, nil
 }
@@ -222,10 +222,10 @@ func (left *Widget) Equals(o util.Comparable) bool {
 	return left.Name == right.Name &&
 		left.Description == right.Description &&
 		left.WidgetType == right.WidgetType &&
-		left.WidgetSize.Equals(right.WidgetSize) &&
+		left.WidgetSize.Equals(&right.WidgetSize) &&
 		util.CompareStringSlices(left.Filters, right.Filters) &&
-		left.WidgetPosition.Equals(right.WidgetPosition) &&
-		left.ContentParameters.Equals(right.ContentParameters)
+		left.WidgetPosition.Equals(&right.WidgetPosition) &&
+		left.ContentParameters.Equals(&right.ContentParameters)
 }
 
 func (d *Widget) Key() string {
