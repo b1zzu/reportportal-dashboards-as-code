@@ -24,10 +24,10 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// Services used for talking to different parts of the ReportPortal API.
-	Dashboard       *DashboardService
-	Widget          *WidgetService
+	Dashboard       IDashboardService
+	Widget          IWidgetService
 	Filter          *FilterService
-	ProjectSettings *ProjectSettingsService
+	ProjectSettings IProjectSettingsService
 }
 
 type service struct {

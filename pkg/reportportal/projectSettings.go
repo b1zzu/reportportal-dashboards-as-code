@@ -2,6 +2,10 @@ package reportportal
 
 import "fmt"
 
+type IProjectSettingsService interface {
+	Get(projectName string) (*ProjectSettings, *Response, error)
+}
+
 type ProjectSettingsService service
 
 type ProjectSettings struct {

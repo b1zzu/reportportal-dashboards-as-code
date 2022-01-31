@@ -5,6 +5,16 @@ import (
 	"net/url"
 )
 
+type IDashboardService interface {
+	GetByName(projectName, name string) (*Dashboard, *Response, error)
+	GetByID(projectName string, id int) (*Dashboard, *Response, error)
+	Create(projectName string, d *NewDashboard) (int, *Response, error)
+	Update(projectName string, dashboardID int, d *UpdateDashboard) (string, *Response, error)
+	Delete(projectName string, id int) (string, *Response, error)
+	AddWidget(projectName string, dashboardID int, w *DashboardWidget) (string, *Response, error)
+	RemoveWidget(projectName string, dashboardID int, widgetID int) (string, *Response, error)
+}
+
 type DashboardService service
 
 type DashboardList struct {

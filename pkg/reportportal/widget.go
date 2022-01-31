@@ -4,6 +4,11 @@ import (
 	"fmt"
 )
 
+type IWidgetService interface {
+	Get(projectName string, id int) (*Widget, *Response, error)
+	Post(projectName string, w *NewWidget) (int, *Response, error)
+}
+
 type WidgetService service
 
 type Widget struct {
