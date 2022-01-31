@@ -4,7 +4,173 @@ import (
 	"testing"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
+	"github.com/google/go-cmp/cmp"
 )
+
+func TestToFilter(t *testing.T) {
+
+	inputFilter := &reportportal.Filter{
+		Owner: "dbizzarr",
+		Share: true,
+		ID:    2,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	got := ToFilter(inputFilter)
+
+	want := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		origin: inputFilter,
+	}
+
+	testDeepEqual(t, got, want, cmp.AllowUnexported(Filter{}))
+}
+
+func TestFilterToNewFilter(t *testing.T) {
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	got := FilterToNewFilter(inputFilter)
+
+	want := &reportportal.NewFilter{
+		Share: true,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	testDeepEqual(t, got, want)
+}
+
+func TestFilterToUpdateFilter(t *testing.T) {
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	got := FilterToUpdateFilter(inputFilter)
+
+	want := &reportportal.UpdateFilter{
+		Share: true,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	testDeepEqual(t, got, want)
+}
 
 func TestFilterEquals(t *testing.T) {
 
@@ -62,7 +228,7 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters where one has nil conditions should return false",
 			left: &Filter{
-				Conditions: []*FilterCondition{},
+				Conditions: []FilterCondition{},
 			},
 			right: &Filter{
 				Conditions: nil,
@@ -72,7 +238,7 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters where one has nil orders should return false",
 			left: &Filter{
-				Orders: []*FilterOrder{},
+				Orders: []FilterOrder{},
 			},
 			right: &Filter{
 				Orders: nil,
@@ -82,13 +248,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with different condtions should return false",
 			left: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
 			},
 			right: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test2"},
 				},
@@ -98,13 +264,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with different number of condtions should return false",
 			left: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
 			},
 			right: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 				},
 			},
@@ -113,13 +279,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with same conditions and same order should return true",
 			left: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
 			},
 			right: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
@@ -129,13 +295,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with same conditions should return true",
 			left: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
 			},
 			right: &Filter{
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 				},
@@ -145,13 +311,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with different orders should return false",
 			left: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
 			},
 			right: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: true},
 				},
@@ -161,13 +327,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with different number of orders should return false",
 			left: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
 			},
 			right: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 				},
 			},
@@ -176,13 +342,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with same orders and same order should return true",
 			left: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
 			},
 			right: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
@@ -192,13 +358,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare filters with same orders should return true",
 			left: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
 			},
 			right: &Filter{
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "name", IsAsc: false},
 					{SortingColumn: "description", IsAsc: true},
 				},
@@ -211,11 +377,11 @@ func TestFilterEquals(t *testing.T) {
 				Kind:        "Filter",
 				Name:        "Test",
 				Description: "My test description",
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "description", IsAsc: true},
 					{SortingColumn: "name", IsAsc: false},
 				},
@@ -224,11 +390,11 @@ func TestFilterEquals(t *testing.T) {
 				Kind:        "Filter",
 				Name:        "Test",
 				Description: "My test description",
-				Conditions: []*FilterCondition{
+				Conditions: []FilterCondition{
 					{FilteringField: "description", Condition: "equal", Value: "test"},
 					{FilteringField: "name", Condition: "equal", Value: "test"},
 				},
-				Orders: []*FilterOrder{
+				Orders: []FilterOrder{
 					{SortingColumn: "name", IsAsc: false},
 					{SortingColumn: "description", IsAsc: true},
 				},

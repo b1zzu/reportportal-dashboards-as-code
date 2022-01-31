@@ -9,12 +9,12 @@ import (
 const FilterKind = "Filter"
 
 type Filter struct {
-	Kind        string             `json:"kind"`
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Kind        string            `json:"kind"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 
 	origin *reportportal.Filter
 }
@@ -32,14 +32,14 @@ type FilterOrder struct {
 
 func ToFilter(f *reportportal.Filter) *Filter {
 
-	conditions := make([]*FilterCondition, len(f.Conditions))
+	conditions := make([]FilterCondition, len(f.Conditions))
 	for i, c := range f.Conditions {
-		conditions[i] = &FilterCondition{Condition: c.Condition, FilteringField: c.FilteringField, Value: c.Value}
+		conditions[i] = FilterCondition{Condition: c.Condition, FilteringField: c.FilteringField, Value: c.Value}
 	}
 
-	orders := make([]*FilterOrder, len(f.Orders))
+	orders := make([]FilterOrder, len(f.Orders))
 	for i, o := range f.Orders {
-		orders[i] = &FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
+		orders[i] = FilterOrder{IsAsc: o.IsAsc, SortingColumn: o.SortingColumn}
 	}
 
 	return &Filter{
@@ -53,7 +53,7 @@ func ToFilter(f *reportportal.Filter) *Filter {
 	}
 }
 
-func toFilterConditions(conditions []*FilterCondition) []reportportal.FilterCondition {
+func toFilterConditions(conditions []FilterCondition) []reportportal.FilterCondition {
 
 	r := make([]reportportal.FilterCondition, len(conditions))
 	for i, c := range conditions {
@@ -63,7 +63,7 @@ func toFilterConditions(conditions []*FilterCondition) []reportportal.FilterCond
 	return r
 }
 
-func toFilterOrders(orders []*FilterOrder) []reportportal.FilterOrder {
+func toFilterOrders(orders []FilterOrder) []reportportal.FilterOrder {
 
 	r := make([]reportportal.FilterOrder, len(orders))
 	for i, o := range orders {
@@ -115,7 +115,7 @@ func (f *Filter) GetKind() string {
 	return f.Kind
 }
 
-func conditionsToStringSlice(conditions []*FilterCondition) []string {
+func conditionsToStringSlice(conditions []FilterCondition) []string {
 	s := make([]string, len(conditions))
 	for i, c := range conditions {
 		s[i] = c.Condition + c.FilteringField + c.Value
@@ -123,7 +123,7 @@ func conditionsToStringSlice(conditions []*FilterCondition) []string {
 	return s
 }
 
-func ordersToStringSlice(orders []*FilterOrder) []string {
+func ordersToStringSlice(orders []FilterOrder) []string {
 	s := make([]string, len(orders))
 	for i, o := range orders {
 		sort := "dsc"
