@@ -5,6 +5,13 @@ import (
 	"net/url"
 )
 
+type IFilterService interface {
+	GetByID(projectName string, id int) (*Filter, *Response, error)
+	GetByName(projectName, name string) (*Filter, *Response, error)
+	Create(projectName string, f *NewFilter) (int, *Response, error)
+	Update(projectName string, id int, f *UpdateFilter) (string, *Response, error)
+}
+
 type FilterService service
 
 type FilterList struct {

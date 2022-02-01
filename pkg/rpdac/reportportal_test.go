@@ -284,3 +284,93 @@ func TestGetDashboard(t *testing.T) {
 	}
 	testDeepEqual(t, got, want, opts)
 }
+
+func TestGetFilter(t *testing.T) {
+
+	filter := &reportportal.Filter{
+		Owner: "dbizzarr",
+		Share: true,
+		ID:    2,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByIDM: func(projectName string, id int) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, id, 2)
+			return filter, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	got, err := r.GetFilter("test_project", 2)
+	if err != nil {
+		t.Errorf("ReportPortal.GetDashboard returned error: %v", err)
+	}
+
+	want := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Type:        "Launch",
+		Description: "",
+		Conditions: []FilterCondition{
+			{FilteringField: "name", Condition: "eq", Value: "mk-e2e-test-suite"},
+		},
+		Orders: []FilterOrder{
+			{SortingColumn: "startTime", IsAsc: false},
+			{SortingColumn: "number", IsAsc: false},
+		},
+		origin: filter,
+	}
+
+	testDeepEqual(t, got, want, cmp.AllowUnexported(Filter{}))
+}
+
+func TestGetDashboardByName(t *testing.T) {
+
+}
+func TestGetDashboardByName_NotFound(t *testing.T) {
+
+}
+func TestGetFilterByName(t *testing.T) {
+
+}
+func TestGetFilterByName_NotFound(t *testing.T) {
+
+}
+func TestCreateDashboard(t *testing.T) {
+
+}
+func TestCreateFilter(t *testing.T) {
+
+}
+func TestDeleteDashboard(t *testing.T) {
+
+}
+func TestApplyDashboard(t *testing.T) {
+
+}
+func TestApplyFilter(t *testing.T) {
+
+}

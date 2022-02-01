@@ -50,6 +50,26 @@ func (s *MockWidgetService) Post(projectName string, w *NewWidget) (int, *Respon
 	return s.PostM(projectName, w)
 }
 
+type MockFilterService struct {
+	GetByIDM   func(projectName string, id int) (*Filter, *Response, error)
+	GetByNameM func(projectName, name string) (*Filter, *Response, error)
+	CreateM    func(projectName string, f *NewFilter) (int, *Response, error)
+	UpdateM    func(projectName string, id int, f *UpdateFilter) (string, *Response, error)
+}
+
+func (s *MockFilterService) GetByID(projectName string, id int) (*Filter, *Response, error) {
+	return s.GetByIDM(projectName, id)
+}
+func (s *MockFilterService) GetByName(projectName, name string) (*Filter, *Response, error) {
+	return s.GetByNameM(projectName, name)
+}
+func (s *MockFilterService) Create(projectName string, f *NewFilter) (int, *Response, error) {
+	return s.CreateM(projectName, f)
+}
+func (s *MockFilterService) Update(projectName string, id int, f *UpdateFilter) (string, *Response, error) {
+	return s.UpdateM(projectName, id, f)
+}
+
 type MockProjectSettingsService struct {
 	GetM func(projectName string) (*ProjectSettings, *Response, error)
 }

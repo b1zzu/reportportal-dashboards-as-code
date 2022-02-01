@@ -26,7 +26,7 @@ type Client struct {
 	// Services used for talking to different parts of the ReportPortal API.
 	Dashboard       IDashboardService
 	Widget          IWidgetService
-	Filter          *FilterService
+	Filter          IFilterService
 	ProjectSettings IProjectSettingsService
 }
 
