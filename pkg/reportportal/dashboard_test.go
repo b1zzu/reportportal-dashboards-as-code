@@ -23,7 +23,7 @@ func TestDashboardGetByID(t *testing.T) {
 			"name": "MK E2E Tests Overview",
 			"widgets": [
 				{
-					"widgetName": "Failed/Skipped/Passed",
+					"widgetName": "Failed/Skipped/Passed [Last 7 days] #9eaf",
 					"widgetId": 3,
 					"widgetType": "statisticTrend",
 					"widgetSize": {
@@ -37,7 +37,7 @@ func TestDashboardGetByID(t *testing.T) {
 					"share": true
 				},
 				{
-					"widgetName": "Unique bugs [Last 7 days]",
+					"widgetName": "Unique bugs [Last 7 days] #9eaf",
 					"widgetId": 67,
 					"widgetType": "uniqueBugTable",
 					"widgetSize": {
@@ -66,7 +66,7 @@ func TestDashboardGetByID(t *testing.T) {
 		Name:  "MK E2E Tests Overview",
 		Widgets: []DashboardWidget{
 			{
-				WidgetName: "Failed/Skipped/Passed",
+				WidgetName: "Failed/Skipped/Passed [Last 7 days] #9eaf",
 				WidgetID:   3,
 				WidgetType: "statisticTrend",
 				WidgetSize: DashboardWidgetSize{
@@ -80,7 +80,7 @@ func TestDashboardGetByID(t *testing.T) {
 				Share: true,
 			},
 			{
-				WidgetName: "Unique bugs [Last 7 days]",
+				WidgetName: "Unique bugs [Last 7 days] #9eaf",
 				WidgetID:   67,
 				WidgetType: "uniqueBugTable",
 				WidgetSize: DashboardWidgetSize{
