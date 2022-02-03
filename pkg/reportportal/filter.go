@@ -5,6 +5,13 @@ import (
 	"net/url"
 )
 
+type IFilterService interface {
+	GetByID(projectName string, id int) (*Filter, *Response, error)
+	GetByName(projectName, name string) (*Filter, *Response, error)
+	Create(projectName string, f *NewFilter) (int, *Response, error)
+	Update(projectName string, id int, f *UpdateFilter) (string, *Response, error)
+}
+
 type FilterService service
 
 type FilterList struct {
@@ -12,14 +19,14 @@ type FilterList struct {
 }
 
 type Filter struct {
-	Share       bool               `json:"share"`
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Owner       string             `json:"onwer"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Share       bool              `json:"share"`
+	ID          int               `json:"id"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Owner       string            `json:"owner"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 }
 
 type FilterCondition struct {
@@ -38,16 +45,25 @@ type FilterNotFoundError struct {
 }
 
 type NewFilter struct {
-	Name        string             `json:"name"`
-	Type        string             `json:"type"`
-	Description string             `json:"description"`
-	Share       bool               `json:"share"`
-	Conditions  []*FilterCondition `json:"conditions"`
-	Orders      []*FilterOrder     `json:"orders"`
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Share       bool              `json:"share"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
 }
 
-func NewFilterNotFoundError(projectName, filterName string) *DashboardNotFoundError {
-	return &DashboardNotFoundError{Message: fmt.Sprintf("error filter with name \"%s\" in project \"%s\" not found", filterName, projectName)}
+type UpdateFilter struct {
+	Name        string            `json:"name"`
+	Type        string            `json:"type"`
+	Description string            `json:"description"`
+	Share       bool              `json:"share"`
+	Conditions  []FilterCondition `json:"conditions"`
+	Orders      []FilterOrder     `json:"orders"`
+}
+
+func NewFilterNotFoundError(projectName, filterName string) *FilterNotFoundError {
+	return &FilterNotFoundError{Message: fmt.Sprintf("error filter with name \"%s\" in project \"%s\" not found", filterName, projectName)}
 }
 
 func (e *FilterNotFoundError) Error() string {
@@ -107,4 +123,21 @@ func (s *FilterService) Create(projectName string, f *NewFilter) (int, *Response
 	}
 
 	return e.ID, resp, nil
+}
+
+func (s *FilterService) Update(projectName string, id int, f *UpdateFilter) (string, *Response, error) {
+	u := fmt.Sprintf("v1/%v/filter/%d", projectName, id)
+
+	req, err := s.client.NewRequest("PUT", u, f)
+	if err != nil {
+		return "", nil, err
+	}
+
+	e := new(OperationCompletion)
+	resp, err := s.client.Do(req, e)
+	if err != nil {
+		return "", resp, err
+	}
+
+	return e.Message, resp, nil
 }

@@ -3,6 +3,7 @@ package reportportal
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,10 +24,10 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// Services used for talking to different parts of the ReportPortal API.
-	Dashboard       *DashboardService
-	Widget          *WidgetService
-	Filter          *FilterService
-	ProjectSettings *ProjectSettingsService
+	Dashboard       IDashboardService
+	Widget          IWidgetService
+	Filter          IFilterService
+	ProjectSettings IProjectSettingsService
 }
 
 type service struct {
@@ -34,6 +35,9 @@ type service struct {
 }
 
 func NewClient(httpClient *http.Client, baseURL string) (*Client, error) {
+	if baseURL == "" {
+		return nil, errors.New("baseURL is empty")
+	}
 	if httpClient == nil {
 		httpClient = &http.Client{}
 	}

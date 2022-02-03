@@ -4,18 +4,23 @@ import (
 	"fmt"
 )
 
+type IWidgetService interface {
+	Get(projectName string, id int) (*Widget, *Response, error)
+	Post(projectName string, w *NewWidget) (int, *Response, error)
+}
+
 type WidgetService service
 
 type Widget struct {
-	Description       string                   `json:"description"`
-	Owner             string                   `json:"owner"`
-	Share             bool                     `json:"share"`
-	ID                int                      `json:"id"`
-	Name              string                   `json:"name"`
-	WidgetType        string                   `json:"widgetType"`
-	ContentParameters *WidgetContentParameters `json:"contentParameters"`
-	AppliedFilters    []*Filter                `json:"appliedFilters"`
-	Content           interface{}              `json:"content"` // incomplete
+	Description       string                  `json:"description"`
+	Owner             string                  `json:"owner"`
+	Share             bool                    `json:"share"`
+	ID                int                     `json:"id"`
+	Name              string                  `json:"name"`
+	WidgetType        string                  `json:"widgetType"`
+	ContentParameters WidgetContentParameters `json:"contentParameters"`
+	AppliedFilters    []Filter                `json:"appliedFilters"`
+	Content           interface{}             `json:"content"` // incomplete
 }
 
 type WidgetContentParameters struct {
@@ -25,12 +30,12 @@ type WidgetContentParameters struct {
 }
 
 type NewWidget struct {
-	Name              string                   `json:"name"`
-	Description       string                   `json:"description"`
-	Share             bool                     `json:"share"`
-	WidgetType        string                   `json:"widgetType"`
-	ContentParameters *WidgetContentParameters `json:"contentParameters"`
-	Filters           []int                    `json:"filterIds"`
+	Name              string                  `json:"name"`
+	Description       string                  `json:"description"`
+	Share             bool                    `json:"share"`
+	WidgetType        string                  `json:"widgetType"`
+	ContentParameters WidgetContentParameters `json:"contentParameters"`
+	Filters           []int                   `json:"filterIds"`
 }
 
 func (s *WidgetService) Get(projectName string, id int) (*Widget, *Response, error) {

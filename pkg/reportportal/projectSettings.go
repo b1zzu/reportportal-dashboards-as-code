@@ -2,12 +2,18 @@ package reportportal
 
 import "fmt"
 
+type IProjectSettingsService interface {
+	Get(projectName string) (*ProjectSettings, *Response, error)
+}
+
 type ProjectSettingsService service
 
 type ProjectSettings struct {
-	ProjectID int                        `json:"project"`
-	SubTypes  map[string][]*IssueSubType `json:"subTypes"`
+	ProjectID int           `json:"project"`
+	SubTypes  IssueSubTypes `json:"subTypes"`
 }
+
+type IssueSubTypes map[string][]IssueSubType
 
 type IssueSubType struct {
 	ID        int    `json:"id"`
