@@ -12,6 +12,7 @@ import (
 type IFilterService interface {
 	Get(project string, id int) (Object, error)
 	Create(project string, o Object) error
+	Apply(project string, o Object) error
 
 	GetFilter(project string, id int) (*Filter, error)
 	GetFilterByName(project, name string) (*Filter, error)
@@ -49,6 +50,10 @@ func (s *FilterService) Get(project string, id int) (Object, error) {
 
 func (s *FilterService) Create(project string, o Object) error {
 	return s.CreateFilter(project, o.(*Filter))
+}
+
+func (s *FilterService) Apply(project string, o Object) error {
+	return s.ApplyFilter(project, o.(*Filter))
 }
 
 func (s *FilterService) GetFilter(project string, id int) (*Filter, error) {

@@ -16,6 +16,7 @@ import (
 type IDashboardService interface {
 	Get(project string, id int) (Object, error)
 	Create(project string, o Object) error
+	Apply(project string, o Object) error
 
 	GetDashboard(project string, id int) (*Dashboard, error)
 	GetDashboardByName(project, name string) (*Dashboard, error)
@@ -69,6 +70,10 @@ func (s *DashboardService) Get(project string, id int) (Object, error) {
 
 func (s *DashboardService) Create(project string, o Object) error {
 	return s.CreateDashboard(project, o.(*Dashboard))
+}
+
+func (s *DashboardService) Apply(project string, o Object) error {
+	return s.ApplyDashboard(project, o.(*Dashboard))
 }
 
 func (s *DashboardService) GetDashboard(project string, id int) (*Dashboard, error) {
@@ -184,20 +189,28 @@ func (s *DashboardService) ApplyDashboard(project string, d *Dashboard) error {
 
 	currentDashboard, err := s.GetDashboardByName(project, d.Name)
 	if err != nil {
-		return fmt.Errorf("error retrieving dashboard \"%s\" by name: %w", d.Name, err)
+		return fmt.Errorf("error retrieving Dashboard with name '%s': %w", d.Name, err)
 	}
 
 	if currentDashboard != nil {
 
 		if currentDashboard.Equals(d) {
-			log.Printf("skip apply for dashboard \"%s\"", d.Name)
+			log.Printf("Skip apply for Dashboard with name '%s' in project '%s'", d.Name, project)
 			return nil
 		}
 
-		return s.updateDashboard(project, currentDashboard, d)
+		if err = s.updateDashboard(project, currentDashboard, d); err != nil {
+			return err
+		}
+		log.Printf("Dashboard with name '%s' updated in project '%s'", d.Name, project)
+		return nil
 	}
 
-	return s.CreateDashboard(project, d)
+	if err = s.CreateDashboard(project, d); err != nil {
+		return err
+	}
+	log.Printf("Dashboard with name '%s' created in project '%s'", d.Name, project)
+	return nil
 }
 
 func (s *DashboardService) updateDashboard(project string, currentDashboard, targetDashboard *Dashboard) error {
@@ -228,7 +241,6 @@ func (s *DashboardService) updateDashboard(project string, currentDashboard, tar
 	if err != nil {
 		return fmt.Errorf("error updating dashboard %s: %w", targetDashboard.Name, err)
 	}
-	log.Printf("updated \"%s\" dashboard", targetDashboard.Name)
 
 	return s.createWidgets(project, dashboardID, targetDashboard, filtersMap, encodeSubTypesMap)
 }
@@ -421,6 +433,9 @@ func (d *Dashboard) GetKind() ObjectKind {
 }
 
 func (left *Dashboard) Equals(o util.Comparable) bool {
+
+	// TODO: Can be substiuted with cmp.Equal() if we can make it order indipendent for slices
+
 	if left == nil || o == nil {
 		return left == o
 	}

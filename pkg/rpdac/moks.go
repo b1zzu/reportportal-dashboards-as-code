@@ -24,6 +24,9 @@ func (s *MockDashboardService) Get(project string, id int) (Object, error) {
 func (s *MockDashboardService) Create(project string, o Object) error {
 	return s.CreateDashboard(project, o.(*Dashboard))
 }
+func (s *MockDashboardService) Apply(project string, o Object) error {
+	return s.ApplyDashboard(project, o.(*Dashboard))
+}
 func (s *MockDashboardService) GetDashboard(project string, id int) (*Dashboard, error) {
 	s.Counter.GetDashboard++
 	return s.GetDashboardM(project, id)
@@ -66,6 +69,9 @@ func (s *MockFilterService) Get(project string, id int) (Object, error) {
 }
 func (s *MockFilterService) Create(project string, o Object) error {
 	return s.CreateFilter(project, o.(*Filter))
+}
+func (s *MockFilterService) Apply(project string, o Object) error {
+	return s.ApplyFilter(project, o.(*Filter))
 }
 func (s *MockFilterService) GetFilter(project string, id int) (*Filter, error) {
 	s.Counter.GetFilter++

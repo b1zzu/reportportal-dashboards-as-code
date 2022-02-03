@@ -40,6 +40,10 @@ type CreateInterface interface {
 	Create(project string, o Object) error
 }
 
+type ApplyInterface interface {
+	Apply(project string, o Object) error
+}
+
 func NewReportPortal(c *reportportal.Client) *ReportPortal {
 	r := &ReportPortal{client: c}
 	r.common.client = c
@@ -114,6 +118,39 @@ func (r *ReportPortal) Create(project, file string) error {
 	err = s.Create(project, o)
 	if err != nil {
 		return fmt.Errorf("error creating %s from file '%s' in project '%s': %w", o.GetKind().String(), file, project, err)
+	}
+
+	log.Printf("%s with name '%s' from file '%s' created in project '%s'", o.GetKind().String(), o.GetName(), file, project)
+	return nil
+}
+
+func (r *ReportPortal) Apply(project, file string) error {
+
+	// TODO: The Apply function can be optimizied by removing the apply logic from the services and move it here
+
+	fileBytes, err := ioutil.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("error reading file '%s': %w", file, err)
+	}
+
+	o, err := UnmarshalObject(fileBytes)
+	if err != nil {
+		return fmt.Errorf("error unmarshal (decoding) file '%s': %w", file, err)
+	}
+
+	var s ApplyInterface
+	switch o.GetKind() {
+	case DashboardKind:
+		s = r.Dashboard
+	case FilterKind:
+		s = r.Filter
+	default:
+		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", o.GetKind().String())
+	}
+
+	err = s.Apply(project, o)
+	if err != nil {
+		return fmt.Errorf("error applying %s from file '%s' in project '%s': %w", o.GetKind().String(), file, project, err)
 	}
 
 	return nil

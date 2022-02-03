@@ -240,3 +240,89 @@ orders:
 
 	testDeepEqual(t, mockFilter.Counter, MockFilterServiceCounter{CreateFilter: 1})
 }
+
+func TestApply_Dashboard(t *testing.T) {
+
+	input := `kind: Dashboard
+name: MK E2E Tests Overview
+description: ""
+widgets: []
+`
+
+	file, cleanFile := writeTmpFile(t, "dashboard", input)
+	defer cleanFile()
+
+	mockDashboard := &MockDashboardService{
+		ApplyDashboardM: func(project string, d *Dashboard) error {
+			testEqual(t, project, "test_project")
+			testDeepEqual(t, d, &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "",
+				Widgets:     []*Widget{},
+			}, cmp.AllowUnexported(Dashboard{}))
+			return nil
+		},
+	}
+
+	r := NewReportPortal(nil)
+	r.Dashboard = mockDashboard
+
+	err := r.Apply("test_project", file)
+	if err != nil {
+		t.Errorf("Apply retunred error: %s", err)
+	}
+
+	testDeepEqual(t, mockDashboard.Counter, MockDashboardServiceCounter{ApplyDashboard: 1})
+}
+
+func TestApply_Filter(t *testing.T) {
+
+	input := `kind: Filter
+name: mk-e2e-test-suite
+type: Launch
+description: ""
+conditions:
+- filteringfield: name
+  condition: eq
+  value: mk-e2e-test-suite
+orders:
+- sortingcolumn: startTime
+  isasc: false
+- sortingcolumn: number
+  isasc: false
+`
+
+	file, cleanFile := writeTmpFile(t, "filter", input)
+	defer cleanFile()
+
+	mockFilter := &MockFilterService{
+		ApplyFilterM: func(project string, d *Filter) error {
+			testEqual(t, project, "test_project")
+			testDeepEqual(t, d, &Filter{
+				Kind:        FilterKind,
+				Name:        "mk-e2e-test-suite",
+				Type:        "Launch",
+				Description: "",
+				Conditions: []FilterCondition{
+					{FilteringField: "name", Condition: "eq", Value: "mk-e2e-test-suite"},
+				},
+				Orders: []FilterOrder{
+					{SortingColumn: "startTime", IsAsc: false},
+					{SortingColumn: "number", IsAsc: false},
+				},
+			}, cmp.AllowUnexported(Filter{}))
+			return nil
+		},
+	}
+
+	r := NewReportPortal(nil)
+	r.Filter = mockFilter
+
+	err := r.Apply("test_project", file)
+	if err != nil {
+		t.Errorf("Apply retunred error: %s", err)
+	}
+
+	testDeepEqual(t, mockFilter.Counter, MockFilterServiceCounter{ApplyFilter: 1})
+}
