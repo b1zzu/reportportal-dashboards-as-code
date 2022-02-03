@@ -10,6 +10,8 @@ import (
 )
 
 type IFilterService interface {
+	Get(project string, id int) (Object, error)
+
 	GetFilter(project string, id int) (*Filter, error)
 	GetFilterByName(project, name string) (*Filter, error)
 	CreateFilter(project string, f *Filter) error
@@ -38,6 +40,10 @@ type FilterCondition struct {
 type FilterOrder struct {
 	SortingColumn string `json:"sortingColumn"`
 	IsAsc         bool   `json:"isAsc"`
+}
+
+func (s *FilterService) Get(project string, id int) (Object, error) {
+	return s.GetFilter(project, id)
 }
 
 func (s *FilterService) GetFilter(project string, id int) (*Filter, error) {

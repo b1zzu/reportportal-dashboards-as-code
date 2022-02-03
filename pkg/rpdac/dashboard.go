@@ -15,6 +15,8 @@ import (
 )
 
 type IDashboardService interface {
+	Get(project string, id int) (Object, error)
+
 	GetDashboard(project string, id int) (*Dashboard, error)
 	GetDashboardByName(project, name string) (*Dashboard, error)
 	CreateDashboard(project string, d *Dashboard) error
@@ -59,6 +61,10 @@ type WidgetContentParameters struct {
 	ContentFields []string               `json:"contentFields"`
 	ItemsCount    int                    `json:"itemsCount"`
 	WidgetOptions map[string]interface{} `json:"widgetOptions"`
+}
+
+func (s *DashboardService) Get(project string, id int) (Object, error) {
+	return s.GetDashboard(project, id)
 }
 
 func (s *DashboardService) GetDashboard(project string, id int) (*Dashboard, error) {

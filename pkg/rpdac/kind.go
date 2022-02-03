@@ -18,7 +18,11 @@ var kinds = map[ObjectKind]string{
 }
 
 func (k ObjectKind) String() string {
-	return kinds[k]
+	v, ok := kinds[k]
+	if !ok {
+		return "Unknown"
+	}
+	return v
 }
 
 // MarshalJSON marshals the enum as a quoted json string

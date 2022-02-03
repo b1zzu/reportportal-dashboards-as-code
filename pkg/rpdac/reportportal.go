@@ -32,6 +32,10 @@ type service struct {
 	client *reportportal.Client
 }
 
+type GetInterface interface {
+	Get(project string, id int) (Object, error)
+}
+
 func NewReportPortal(c *reportportal.Client) *ReportPortal {
 	r := &ReportPortal{client: c}
 	r.common.client = c
@@ -40,25 +44,42 @@ func NewReportPortal(c *reportportal.Client) *ReportPortal {
 	return r
 }
 
-func ToYaml(o Object) ([]byte, error) {
+// Export the ObjectKind with the passed id from the passed project to the passed file.
+//
+// The file can be a relative or absoulte path to the file that will be written with the
+// full content of the exported Object.
+//
+func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string) error {
+
+	var s GetInterface
+	switch k {
+	case DashboardKind:
+		s = r.Dashboard
+	case FilterKind:
+		s = r.Filter
+	default:
+		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", k.String())
+	}
+
+	// retrieve object from reportportal
+	o, err := s.Get(project, id)
+	if err != nil {
+		return fmt.Errorf("error retrieving '%s' with id '%d' in project '%s': %w", k.String(), id, project, err)
+	}
+
+	// convert object to YAML
 	b, err := yaml.Marshal(o)
 	if err != nil {
-		return []byte{}, fmt.Errorf("error marshal %s %s: %w", o.GetKind(), o.GetName(), err)
+		return fmt.Errorf("error marshal (encoding) '%s' with id '%d' in project '%s' to YAML: %w", k.String(), id, project, err)
 	}
-	return b, nil
-}
 
-func WriteToFile(o Object, file string) error {
-
-	y, err := ToYaml(o)
+	// write object to file
+	err = ioutil.WriteFile(file, b, 0660)
 	if err != nil {
-		return err
+		return fmt.Errorf("error writing '%s' with id '%d' in project '%s' to file '%s': %w", k.String(), id, project, file, err)
 	}
 
-	err = ioutil.WriteFile(file, y, 0660)
-	if err != nil {
-		return fmt.Errorf("error writing yaml %s %s to file %s: %w", o.GetKind(), o.GetName(), file, err)
-	}
+	log.Printf("%s with id '%d' in project '%s' exported to '%s'", k.String(), id, project, file)
 	return nil
 }
 

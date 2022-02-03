@@ -54,6 +54,7 @@ func TestFilterGetByID(t *testing.T) {
 		ID:          2,
 		Name:        "mk-e2e-test-suite",
 		Description: "test",
+		Type:        "Launch",
 		Conditions: []FilterCondition{
 			{
 				FilteringField: "name",
@@ -71,7 +72,6 @@ func TestFilterGetByID(t *testing.T) {
 				IsAsc:         false,
 			},
 		},
-		Type: "Launch",
 	}
 
 	if !cmp.Equal(filter, want) {

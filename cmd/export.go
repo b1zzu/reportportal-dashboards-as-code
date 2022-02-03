@@ -37,23 +37,9 @@ var (
 			if err != nil {
 				return err
 			}
-
 			r := rpdac.NewReportPortal(c)
 
-			// retrieve the Dashboard and Widgets in a single reusable object
-			d, err := r.Dashboard.GetDashboard(exportProject, exportDashboardID)
-			if err != nil {
-				return err
-			}
-
-			// write the Dashboard object to file in YAML
-			err = rpdac.WriteToFile(d, exportFile)
-			if err != nil {
-				return err
-			}
-
-			log.Printf("Dashboard \"%s\" exported to \"%s\"", d.Name, exportFile)
-			return nil
+			return r.Export(rpdac.DashboardKind, exportProject, exportDashboardID, exportFile)
 		},
 	}
 
@@ -66,23 +52,9 @@ var (
 			if err != nil {
 				return err
 			}
-
 			r := rpdac.NewReportPortal(c)
 
-			// retrieve the Filter object
-			f, err := r.Filter.GetFilter(exportProject, exportFilterID)
-			if err != nil {
-				return err
-			}
-
-			// write the Filter object to file in YAML
-			err = rpdac.WriteToFile(f, exportFile)
-			if err != nil {
-				return err
-			}
-
-			log.Printf("Filter \"%s\" exported to \"%s\"", f.Name, exportFile)
-			return nil
+			return r.Export(rpdac.DashboardKind, exportProject, exportFilterID, exportFile)
 		},
 	}
 )
