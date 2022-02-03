@@ -875,7 +875,7 @@ func TestApplyDashboard_Create(t *testing.T) {
 	})
 
 	inputDashboard := &Dashboard{
-		Kind:        "Dashboard",
+		Kind:        DashboardKind,
 		Name:        "MK E2E Tests Overview",
 		Description: "",
 		Widgets: []*Widget{
@@ -1057,7 +1057,7 @@ func TestApplyDashboard_Update(t *testing.T) {
 	})
 
 	inputDashboard := &Dashboard{
-		Kind:        "Dashboard",
+		Kind:        DashboardKind,
 		Name:        "MK E2E Tests Overview",
 		Description: "",
 		Widgets: []*Widget{
@@ -1258,7 +1258,7 @@ func TestApplyDashboard_Skip(t *testing.T) {
 	})
 
 	inputDashboard := &Dashboard{
-		Kind:        "Dashboard",
+		Kind:        DashboardKind,
 		Name:        "MK E2E Tests Overview",
 		Description: "",
 		Widgets: []*Widget{
@@ -1799,13 +1799,13 @@ func TestDashboardEquals(t *testing.T) {
 		{
 			description: "Compare equal dashboards but only one with the origin filed should return true",
 			left: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test",
 				Description: "My test description",
 				origin:      &reportportal.Dashboard{ID: 1},
 			},
 			right: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test",
 				Description: "My test description",
 			},
@@ -1814,12 +1814,12 @@ func TestDashboardEquals(t *testing.T) {
 		{
 			description: "Compare dashboards with differt names should return false",
 			left: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test One",
 				Description: "My test description",
 			},
 			right: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test",
 				Description: "My test description",
 			},
@@ -1828,12 +1828,12 @@ func TestDashboardEquals(t *testing.T) {
 		{
 			description: "Compare dashboards with differt description should return false",
 			left: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test",
 				Description: "My test description",
 			},
 			right: &Dashboard{
-				Kind:        "Dashboard",
+				Kind:        DashboardKind,
 				Name:        "Test",
 				Description: "My updated test description",
 			},

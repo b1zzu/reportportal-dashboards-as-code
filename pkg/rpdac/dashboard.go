@@ -24,13 +24,11 @@ type IDashboardService interface {
 
 type DashboardService service
 
-const DashboardKind = "Dashboard"
-
 type Dashboard struct {
-	Kind        string    `json:"kind"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Widgets     []*Widget `json:"widgets"`
+	Kind        ObjectKind `json:"kind"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Widgets     []*Widget  `json:"widgets"`
 
 	origin *reportportal.Dashboard
 }
@@ -416,7 +414,7 @@ func (d *Dashboard) GetName() string {
 	return d.Name
 }
 
-func (d *Dashboard) GetKind() string {
+func (d *Dashboard) GetKind() ObjectKind {
 	return d.Kind
 }
 

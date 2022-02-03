@@ -53,7 +53,7 @@ func TestGetFilter(t *testing.T) {
 	}
 
 	want := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Type:        "Launch",
 		Description: "",
@@ -115,7 +115,7 @@ func TestGetFilterByName(t *testing.T) {
 	}
 
 	want := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Type:        "Launch",
 		Description: "",
@@ -215,7 +215,7 @@ func TestCreateFilter(t *testing.T) {
 	})
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -290,7 +290,7 @@ func TestApplyFilter_Create(t *testing.T) {
 	})
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -388,7 +388,7 @@ func TestApplyFilter_Update(t *testing.T) {
 	})
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -457,7 +457,7 @@ func TestApplyFilter_Skip(t *testing.T) {
 	})
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -518,7 +518,7 @@ func TestToFilter(t *testing.T) {
 	got := ToFilter(inputFilter)
 
 	want := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -548,7 +548,7 @@ func TestToFilter(t *testing.T) {
 func TestFilterToNewFilter(t *testing.T) {
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -602,7 +602,7 @@ func TestFilterToNewFilter(t *testing.T) {
 func TestFilterToUpdateFilter(t *testing.T) {
 
 	inputFilter := &Filter{
-		Kind:        "Filter",
+		Kind:        FilterKind,
 		Name:        "mk-e2e-test-suite",
 		Description: "",
 		Type:        "Launch",
@@ -670,13 +670,13 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare equal filters but only one with the origin filed should return true",
 			left: &Filter{
-				Kind:        "Filter",
+				Kind:        FilterKind,
 				Name:        "Test",
 				Description: "My test description",
 				origin:      &reportportal.Filter{ID: 1},
 			},
 			right: &Filter{
-				Kind:        "Filter",
+				Kind:        FilterKind,
 				Name:        "Test",
 				Description: "My test description",
 			},
@@ -855,7 +855,7 @@ func TestFilterEquals(t *testing.T) {
 		{
 			description: "Compare equal filters should return true",
 			left: &Filter{
-				Kind:        "Filter",
+				Kind:        FilterKind,
 				Name:        "Test",
 				Description: "My test description",
 				Conditions: []FilterCondition{
@@ -868,7 +868,7 @@ func TestFilterEquals(t *testing.T) {
 				},
 			},
 			right: &Filter{
-				Kind:        "Filter",
+				Kind:        FilterKind,
 				Name:        "Test",
 				Description: "My test description",
 				Conditions: []FilterCondition{

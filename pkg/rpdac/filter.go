@@ -18,10 +18,8 @@ type IFilterService interface {
 
 type FilterService service
 
-const FilterKind = "Filter"
-
 type Filter struct {
-	Kind        string            `json:"kind"`
+	Kind        ObjectKind        `json:"kind"`
 	Name        string            `json:"name"`
 	Type        string            `json:"type"`
 	Description string            `json:"description"`
@@ -191,7 +189,7 @@ func (f *Filter) GetName() string {
 	return f.Name
 }
 
-func (f *Filter) GetKind() string {
+func (f *Filter) GetKind() ObjectKind {
 	return f.Kind
 }
 
