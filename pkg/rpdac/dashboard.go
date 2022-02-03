@@ -11,11 +11,11 @@ import (
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/util"
-	"gopkg.in/yaml.v2"
 )
 
 type IDashboardService interface {
 	Get(project string, id int) (Object, error)
+	Create(project string, o Object) error
 
 	GetDashboard(project string, id int) (*Dashboard, error)
 	GetDashboardByName(project, name string) (*Dashboard, error)
@@ -67,12 +67,16 @@ func (s *DashboardService) Get(project string, id int) (Object, error) {
 	return s.GetDashboard(project, id)
 }
 
+func (s *DashboardService) Create(project string, o Object) error {
+	return s.CreateDashboard(project, o.(*Dashboard))
+}
+
 func (s *DashboardService) GetDashboard(project string, id int) (*Dashboard, error) {
 
 	// retireve the dashboard defintion
 	d, _, err := s.client.Dashboard.GetByID(project, id)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving dashboard %d from project %s: %w", id, project, err)
+		return nil, fmt.Errorf("error retrieving dashboard '%d': %w", id, err)
 	}
 
 	return s.loadDashboard(project, d)
@@ -107,7 +111,7 @@ func (s *DashboardService) loadDashboard(project string, d *reportportal.Dashboa
 	for i, dw := range d.Widgets {
 		w, _, err := s.client.Widget.Get(project, dw.WidgetID)
 		if err != nil {
-			return nil, fmt.Errorf("error retrieving widget %d from project %s: %w", dw.WidgetID, project, err)
+			return nil, fmt.Errorf("error retrieving widget '%d': %w", dw.WidgetID, err)
 		}
 
 		widgets[i], err = ToWidget(w, &dw, dashboardHash, decodeSubTypesMap)
@@ -121,7 +125,6 @@ func (s *DashboardService) loadDashboard(project string, d *reportportal.Dashboa
 
 func (s *DashboardService) CreateDashboard(project string, d *Dashboard) error {
 
-	// resolve all filters
 	filtersMap, err := s.filtersMap(project, d.Widgets)
 	if err != nil {
 		return err
@@ -134,11 +137,15 @@ func (s *DashboardService) CreateDashboard(project string, d *Dashboard) error {
 
 	dashboardID, _, err := s.client.Dashboard.Create(project, &reportportal.NewDashboard{Name: d.Name, Description: d.Description, Share: true})
 	if err != nil {
-		return fmt.Errorf("error creating dashboard %s: %w", d.Name, err)
+		return fmt.Errorf("error creating dashboard '%s': %w", d.Name, err)
 	}
-	log.Printf("dashboard %s created with id: %d", d.Name, dashboardID)
 
-	return s.createWidgets(project, dashboardID, d, filtersMap, encodeSubTypesMap)
+	err = s.createWidgets(project, dashboardID, d, filtersMap, encodeSubTypesMap)
+	if err != nil {
+		return fmt.Errorf("error creating widgets for dashboard '%s': %w", d.Name, err)
+	}
+
+	return nil
 }
 
 func (s *DashboardService) createWidgets(
@@ -154,21 +161,20 @@ func (s *DashboardService) createWidgets(
 
 		nw, dw, err := FromWidget(dashboardHash, w, filtersMap, encodeSubTypesMap)
 		if err != nil {
-			return fmt.Errorf("error converting widget %s: %w", w.Name, err)
+			return fmt.Errorf("error converting widget '%s': %w", w.Name, err)
 		}
 
 		widgetID, _, err := s.client.Widget.Post(project, nw)
 		if err != nil {
-			return fmt.Errorf("error creating widget %s: %w", w.Name, err)
+			return fmt.Errorf("error creating widget '%s': %w", w.Name, err)
 		}
 
 		dw.WidgetID = widgetID
 
 		_, _, err = s.client.Dashboard.AddWidget(project, dashboardID, dw)
 		if err != nil {
-			return fmt.Errorf("error adding widget %s to dashboard %s: %w", w.Name, dashboard.Name, err)
+			return fmt.Errorf("error adding widget '%s' to dashboard '%s': %w", w.Name, dashboard.Name, err)
 		}
-		log.Printf("added \"%s\" widget to \"%s\" dashboard", w.Name, dashboard.Name)
 	}
 	return nil
 }
@@ -404,16 +410,6 @@ func FromWidget(dashboardHash string, w *Widget, filtersMap map[string]int, enco
 	}
 
 	return nw, dw, nil
-}
-
-func LoadDashboardFromFile(file []byte) (*Dashboard, error) {
-
-	d := new(Dashboard)
-	err := yaml.Unmarshal(file, d)
-	if err != nil {
-		return nil, err
-	}
-	return d, nil
 }
 
 func (d *Dashboard) GetName() string {

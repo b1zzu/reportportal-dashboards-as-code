@@ -36,6 +36,10 @@ type GetInterface interface {
 	Get(project string, id int) (Object, error)
 }
 
+type CreateInterface interface {
+	Create(project string, o Object) error
+}
+
 func NewReportPortal(c *reportportal.Client) *ReportPortal {
 	r := &ReportPortal{client: c}
 	r.common.client = c
@@ -74,7 +78,7 @@ func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string)
 	}
 
 	// write object to file
-	err = ioutil.WriteFile(file, b, 0660)
+	err = ioutil.WriteFile(file, b, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing '%s' with id '%d' in project '%s' to file '%s': %w", k.String(), id, project, file, err)
 	}
@@ -83,27 +87,62 @@ func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string)
 	return nil
 }
 
-func LoadFile(file string) ([]byte, error) {
+// Create a object/resource in ReportPortal from the passed file.
+//
+func (r *ReportPortal) Create(project, file string) error {
 
-	b, err := ioutil.ReadFile(file)
+	fileBytes, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, fmt.Errorf("error loading '%s': %w", file, err)
+		return fmt.Errorf("error reading file '%s': %w", file, err)
 	}
-	return b, nil
+
+	o, err := UnmarshalObject(fileBytes)
+	if err != nil {
+		return fmt.Errorf("error unmarshal (decoding) file '%s': %w", file, err)
+	}
+
+	var s CreateInterface
+	switch o.GetKind() {
+	case DashboardKind:
+		s = r.Dashboard
+	case FilterKind:
+		s = r.Filter
+	default:
+		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", o.GetKind().String())
+	}
+
+	err = s.Create(project, o)
+	if err != nil {
+		return fmt.Errorf("error creating %s from file '%s' in project '%s': %w", o.GetKind().String(), file, project, err)
+	}
+
+	return nil
 }
 
-func LoadObjectFromFile(file []byte) (*GenericObject, error) {
+func UnmarshalObject(file []byte) (Object, error) {
 
-	o := new(GenericObject)
-	err := yaml.Unmarshal(file, o)
+	g := new(GenericObject)
+	err := yaml.Unmarshal(file, g)
 	if err != nil {
 		return nil, err
 	}
 
-	if o.Kind == -1 {
-		log.Printf("warning: assuming kind '%s'", DashboardKind)
-		o.Kind = DashboardKind
+	var o Object
+	switch g.Kind {
+	case DashboardKind:
+		o = new(Dashboard)
+	case FilterKind:
+		o = new(Filter)
+	case UnknownKind:
+		log.Printf("warning: assuming kind '%s'", DashboardKind.String())
+		o = new(Dashboard)
+	default:
+		return nil, fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", g.Kind.String())
 	}
 
+	err = yaml.Unmarshal(file, o)
+	if err != nil {
+		return nil, err
+	}
 	return o, nil
 }
