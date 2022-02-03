@@ -1,11 +1,492 @@
 package rpdac
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"github.com/google/go-cmp/cmp"
 )
+
+func TestGetFilter(t *testing.T) {
+
+	filter := &reportportal.Filter{
+		Owner: "dbizzarr",
+		Share: true,
+		ID:    2,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByIDM: func(projectName string, id int) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, id, 2)
+			return filter, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	got, err := r.Filter.GetFilter("test_project", 2)
+	if err != nil {
+		t.Errorf("ReportPortal.GetFilter returned error: %v", err)
+	}
+
+	want := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Type:        "Launch",
+		Description: "",
+		Conditions: []FilterCondition{
+			{FilteringField: "name", Condition: "eq", Value: "mk-e2e-test-suite"},
+		},
+		Orders: []FilterOrder{
+			{SortingColumn: "startTime", IsAsc: false},
+			{SortingColumn: "number", IsAsc: false},
+		},
+		origin: filter,
+	}
+
+	testDeepEqual(t, got, want, cmp.AllowUnexported(Filter{}))
+}
+
+func TestGetFilterByName(t *testing.T) {
+
+	filter := &reportportal.Filter{
+		Owner: "dbizzarr",
+		Share: true,
+		ID:    2,
+		Name:  "mk-e2e-test-suite",
+		Conditions: []reportportal.FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []reportportal.FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+		Type: "Launch",
+	}
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName string, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return filter, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	got, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	if err != nil {
+		t.Errorf("ReportPortal.GetFilterByName returned error: %v", err)
+	}
+
+	want := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Type:        "Launch",
+		Description: "",
+		Conditions: []FilterCondition{
+			{FilteringField: "name", Condition: "eq", Value: "mk-e2e-test-suite"},
+		},
+		Orders: []FilterOrder{
+			{SortingColumn: "startTime", IsAsc: false},
+			{SortingColumn: "number", IsAsc: false},
+		},
+		origin: filter,
+	}
+
+	testDeepEqual(t, got, want, cmp.AllowUnexported(Filter{}))
+}
+
+func TestGetFilterByName_NotFound(t *testing.T) {
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName string, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return nil, nil, reportportal.NewFilterNotFoundError(projectName, name)
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	got, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	if err != nil {
+		t.Errorf("ReportPortal.GetFilterByName returned error: %v", err)
+	}
+
+	if got != nil {
+		t.Errorf("ReportPortal.GetFilterByName want nil but got %+v", got)
+	}
+}
+
+func TestGetFilterByName_Error(t *testing.T) {
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName string, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return nil, nil, errors.New("unexpected error")
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	_, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	if err == nil {
+		t.Errorf("ReportPortal.GetFilterByName did not return the error")
+	}
+}
+
+func TestCreateFilter(t *testing.T) {
+
+	mockFilter := &reportportal.MockFilterService{
+		CreateM: func(projectName string, f *reportportal.NewFilter) (int, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+
+			want := &reportportal.NewFilter{
+				Share: true,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test-suite",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			}
+
+			testDeepEqual(t, f, want)
+			return 2, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	err := r.Filter.CreateFilter("test_project", inputFilter)
+	if err != nil {
+		t.Errorf("ReportPortal.CreateFilter returned error: %v", err)
+	}
+
+	testDeepEqual(t, mockFilter.Counter, reportportal.MockFilterServiceCounter{Create: 1})
+}
+
+func TestApplyFilter_Create(t *testing.T) {
+
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return nil, nil, reportportal.NewFilterNotFoundError(projectName, name)
+		},
+		CreateM: func(projectName string, f *reportportal.NewFilter) (int, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+
+			want := &reportportal.NewFilter{
+				Share: true,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test-suite",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			}
+
+			testDeepEqual(t, f, want)
+			return 2, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	if err != nil {
+		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
+	}
+
+	testDeepEqual(t, mockFilter.Counter, reportportal.MockFilterServiceCounter{GetByName: 1, Create: 1})
+}
+
+func TestApplyFilter_Update(t *testing.T) {
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return &reportportal.Filter{
+				Owner: "dbizzarr",
+				Share: true,
+				ID:    2,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			}, nil, nil
+		},
+		UpdateM: func(projectName string, id int, f *reportportal.UpdateFilter) (string, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, id, 2)
+
+			want := &reportportal.UpdateFilter{
+				Share: true,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test-suite",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			}
+
+			testDeepEqual(t, f, want)
+			return "", nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	if err != nil {
+		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
+	}
+
+	testDeepEqual(t, mockFilter.Counter, reportportal.MockFilterServiceCounter{GetByName: 1, Update: 1})
+
+}
+
+func TestApplyFilter_Skip(t *testing.T) {
+	mockFilter := &reportportal.MockFilterService{
+		GetByNameM: func(projectName, name string) (*reportportal.Filter, *reportportal.Response, error) {
+			testEqual(t, projectName, "test_project")
+			testEqual(t, name, "mk-e2e-test-suite")
+			return &reportportal.Filter{
+				Owner: "dbizzarr",
+				Share: true,
+				ID:    2,
+				Name:  "mk-e2e-test-suite",
+				Conditions: []reportportal.FilterCondition{
+					{
+						FilteringField: "name",
+						Condition:      "eq",
+						Value:          "mk-e2e-test-suite",
+					},
+				},
+				Orders: []reportportal.FilterOrder{
+					{
+						SortingColumn: "startTime",
+						IsAsc:         false,
+					},
+					{
+						SortingColumn: "number",
+						IsAsc:         false,
+					},
+				},
+				Type: "Launch",
+			}, nil, nil
+		},
+	}
+
+	r := NewReportPortal(&reportportal.Client{
+		Filter: mockFilter,
+	})
+
+	inputFilter := &Filter{
+		Kind:        "Filter",
+		Name:        "mk-e2e-test-suite",
+		Description: "",
+		Type:        "Launch",
+		Conditions: []FilterCondition{
+			{
+				FilteringField: "name",
+				Condition:      "eq",
+				Value:          "mk-e2e-test-suite",
+			},
+		},
+		Orders: []FilterOrder{
+			{
+				SortingColumn: "startTime",
+				IsAsc:         false,
+			},
+			{
+				SortingColumn: "number",
+				IsAsc:         false,
+			},
+		},
+	}
+
+	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	if err != nil {
+		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
+	}
+
+	testDeepEqual(t, mockFilter.Counter, reportportal.MockFilterServiceCounter{GetByName: 1})
+}
 
 func TestToFilter(t *testing.T) {
 

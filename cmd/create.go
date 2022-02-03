@@ -41,7 +41,7 @@ var (
 					return err
 				}
 
-				err = r.CreateDashboard(createProject, d)
+				err = r.Dashboard.CreateDashboard(createProject, d)
 				if err != nil {
 					return err
 				}
@@ -53,7 +53,7 @@ var (
 					return err
 				}
 
-				err = r.CreateFilter(createProject, f)
+				err = r.Filter.CreateFilter(createProject, f)
 				if err != nil {
 					return err
 				}

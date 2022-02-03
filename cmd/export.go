@@ -41,7 +41,7 @@ var (
 			r := rpdac.NewReportPortal(c)
 
 			// retrieve the Dashboard and Widgets in a single reusable object
-			d, err := r.GetDashboard(exportProject, exportDashboardID)
+			d, err := r.Dashboard.GetDashboard(exportProject, exportDashboardID)
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,7 @@ var (
 			r := rpdac.NewReportPortal(c)
 
 			// retrieve the Filter object
-			f, err := r.GetFilter(exportProject, exportFilterID)
+			f, err := r.Filter.GetFilter(exportProject, exportFilterID)
 			if err != nil {
 				return err
 			}

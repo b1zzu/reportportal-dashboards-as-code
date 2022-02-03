@@ -1,10 +1,22 @@
 package rpdac
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/util"
 	"gopkg.in/yaml.v2"
 )
+
+type IFilterService interface {
+	GetFilter(project string, id int) (*Filter, error)
+	GetFilterByName(project, name string) (*Filter, error)
+	CreateFilter(project string, f *Filter) error
+	ApplyFilter(project string, f *Filter) error
+}
+
+type FilterService service
 
 const FilterKind = "Filter"
 
@@ -28,6 +40,74 @@ type FilterCondition struct {
 type FilterOrder struct {
 	SortingColumn string `json:"sortingColumn"`
 	IsAsc         bool   `json:"isAsc"`
+}
+
+func (s *FilterService) GetFilter(project string, id int) (*Filter, error) {
+
+	// retireve the filter defintion
+	f, _, err := s.client.Filter.GetByID(project, id)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving filter %d from project %s: %w", id, project, err)
+	}
+
+	return ToFilter(f), nil
+}
+
+func (s *FilterService) GetFilterByName(project, name string) (*Filter, error) {
+
+	f, _, err := s.client.Filter.GetByName(project, name)
+	if err != nil {
+		if _, ok := err.(*reportportal.FilterNotFoundError); ok {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+
+	return ToFilter(f), nil
+}
+
+func (s *FilterService) CreateFilter(project string, f *Filter) error {
+
+	filterID, _, err := s.client.Filter.Create(project, FilterToNewFilter(f))
+	if err != nil {
+		return fmt.Errorf("error creating filter %s: %w", f.Name, err)
+	}
+
+	log.Printf("filter %s created with id: %d", f.Name, filterID)
+	return nil
+}
+
+func (s *FilterService) ApplyFilter(project string, f *Filter) error {
+
+	currentFilter, err := s.GetFilterByName(project, f.Name)
+	if err != nil {
+		return fmt.Errorf("error retrieving filter \"%s\" by name: %w", f.Name, err)
+	}
+
+	if currentFilter != nil {
+
+		if currentFilter.Equals(f) {
+			log.Printf("skip apply for filter \"%s\"", f.Name)
+			return nil
+		}
+
+		return s.updateFilter(project, currentFilter, f)
+	}
+
+	return s.CreateFilter(project, f)
+
+}
+
+func (s *FilterService) updateFilter(project string, currentFilter, targetFilter *Filter) error {
+
+	_, _, err := s.client.Filter.Update(project, currentFilter.origin.ID, FilterToUpdateFilter(targetFilter))
+	if err != nil {
+		return fmt.Errorf("error updating filter \"%s\": %w", targetFilter.Name, err)
+	}
+
+	log.Printf("update \"%s\" filter", targetFilter.Name)
+	return nil
 }
 
 func ToFilter(f *reportportal.Filter) *Filter {
