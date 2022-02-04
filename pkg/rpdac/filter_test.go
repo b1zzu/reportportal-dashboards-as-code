@@ -707,24 +707,24 @@ func TestFilterEquals(t *testing.T) {
 			expexct: false,
 		},
 		{
-			description: "Compare filters where one has nil conditions should return false",
+			description: "Compare filters where one has nil conditions should return true",
 			left: &Filter{
 				Conditions: []FilterCondition{},
 			},
 			right: &Filter{
 				Conditions: nil,
 			},
-			expexct: false,
+			expexct: true,
 		},
 		{
-			description: "Compare filters where one has nil orders should return false",
+			description: "Compare filters where one has nil orders should return true",
 			left: &Filter{
 				Orders: []FilterOrder{},
 			},
 			right: &Filter{
 				Orders: nil,
 			},
-			expexct: false,
+			expexct: true,
 		},
 		{
 			description: "Compare filters with different condtions should return false",
