@@ -47,7 +47,7 @@ func TestGetFilter(t *testing.T) {
 		Filter: mockFilter,
 	})
 
-	got, err := r.Filter.GetFilter("test_project", 2)
+	got, err := r.Filter.Get("test_project", 2)
 	if err != nil {
 		t.Errorf("ReportPortal.GetFilter returned error: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestGetFilterByName(t *testing.T) {
 		Filter: mockFilter,
 	})
 
-	got, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	got, err := r.Filter.GetByName("test_project", "mk-e2e-test-suite")
 	if err != nil {
 		t.Errorf("ReportPortal.GetFilterByName returned error: %v", err)
 	}
@@ -146,7 +146,7 @@ func TestGetFilterByName_NotFound(t *testing.T) {
 		Filter: mockFilter,
 	})
 
-	got, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	got, err := r.Filter.GetByName("test_project", "mk-e2e-test-suite")
 	if err != nil {
 		t.Errorf("ReportPortal.GetFilterByName returned error: %v", err)
 	}
@@ -170,7 +170,7 @@ func TestGetFilterByName_Error(t *testing.T) {
 		Filter: mockFilter,
 	})
 
-	_, err := r.Filter.GetFilterByName("test_project", "mk-e2e-test-suite")
+	_, err := r.Filter.GetByName("test_project", "mk-e2e-test-suite")
 	if err == nil {
 		t.Errorf("ReportPortal.GetFilterByName did not return the error")
 	}
@@ -238,7 +238,7 @@ func TestCreateFilter(t *testing.T) {
 		},
 	}
 
-	err := r.Filter.CreateFilter("test_project", inputFilter)
+	err := r.Filter.Create("test_project", inputFilter)
 	if err != nil {
 		t.Errorf("ReportPortal.CreateFilter returned error: %v", err)
 	}
@@ -313,7 +313,7 @@ func TestApplyFilter_Create(t *testing.T) {
 		},
 	}
 
-	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	err := r.ApplyObject("test_project", inputFilter)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
 	}
@@ -411,7 +411,7 @@ func TestApplyFilter_Update(t *testing.T) {
 		},
 	}
 
-	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	err := r.ApplyObject("test_project", inputFilter)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
 	}
@@ -480,7 +480,7 @@ func TestApplyFilter_Skip(t *testing.T) {
 		},
 	}
 
-	err := r.Filter.ApplyFilter("test_project", inputFilter)
+	err := r.ApplyObject("test_project", inputFilter)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyFilter returned error: %v", err)
 	}

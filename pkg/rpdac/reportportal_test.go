@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 type Tesso struct {
@@ -80,8 +81,8 @@ func TestExport_Dashboard(t *testing.T) {
 
 	r := NewReportPortal(nil)
 
-	r.Dashboard = &MockDashboardService{
-		GetDashboardM: func(project string, id int) (*Dashboard, error) {
+	r.Dashboard = &MockService{
+		GetM: func(project string, id int) (Object, error) {
 			testEqual(t, project, "test_project")
 			testEqual(t, id, 3)
 			return &Dashboard{
@@ -112,8 +113,8 @@ func TestExport_Filter(t *testing.T) {
 	defer cleanFile()
 
 	r := NewReportPortal(nil)
-	r.Filter = &MockFilterService{
-		GetFilterM: func(project string, id int) (*Filter, error) {
+	r.Filter = &MockService{
+		GetM: func(project string, id int) (Object, error) {
 			testEqual(t, project, "test_project")
 			testEqual(t, id, 3)
 			return &Filter{
@@ -166,10 +167,10 @@ widgets: []
 	file, cleanFile := writeTmpFile(t, "dashboard", input)
 	defer cleanFile()
 
-	mockDashboard := &MockDashboardService{
-		CreateDashboardM: func(project string, d *Dashboard) error {
+	mockDashboard := &MockService{
+		CreateM: func(project string, o Object) error {
 			testEqual(t, project, "test_project")
-			testDeepEqual(t, d, &Dashboard{
+			testDeepEqual(t, o.(*Dashboard), &Dashboard{
 				Kind:        DashboardKind,
 				Name:        "MK E2E Tests Overview",
 				Description: "",
@@ -187,7 +188,7 @@ widgets: []
 		t.Errorf("Create retunred error: %s", err)
 	}
 
-	testDeepEqual(t, mockDashboard.Counter, MockDashboardServiceCounter{CreateDashboard: 1})
+	testDeepEqual(t, mockDashboard.Counter, MockServiceCounter{Create: 1})
 }
 
 func TestCreate_Filter(t *testing.T) {
@@ -210,10 +211,10 @@ orders:
 	file, cleanFile := writeTmpFile(t, "filter", input)
 	defer cleanFile()
 
-	mockFilter := &MockFilterService{
-		CreateFilterM: func(project string, d *Filter) error {
+	mockFilter := &MockService{
+		CreateM: func(project string, o Object) error {
 			testEqual(t, project, "test_project")
-			testDeepEqual(t, d, &Filter{
+			testDeepEqual(t, o.(*Filter), &Filter{
 				Kind:        FilterKind,
 				Name:        "mk-e2e-test-suite",
 				Type:        "Launch",
@@ -238,91 +239,126 @@ orders:
 		t.Errorf("Create retunred error: %s", err)
 	}
 
-	testDeepEqual(t, mockFilter.Counter, MockFilterServiceCounter{CreateFilter: 1})
+	testDeepEqual(t, mockFilter.Counter, MockServiceCounter{Create: 1})
 }
 
-func TestApply_Dashboard(t *testing.T) {
+func TestApply_Skip(t *testing.T) {
 
 	input := `kind: Dashboard
 name: MK E2E Tests Overview
-description: ""
-widgets: []
+description: Test desc
 `
 
 	file, cleanFile := writeTmpFile(t, "dashboard", input)
 	defer cleanFile()
 
-	mockDashboard := &MockDashboardService{
-		ApplyDashboardM: func(project string, d *Dashboard) error {
+	mockService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
 			testEqual(t, project, "test_project")
-			testDeepEqual(t, d, &Dashboard{
+			testEqual(t, name, "MK E2E Tests Overview")
+
+			return &Dashboard{
 				Kind:        DashboardKind,
 				Name:        "MK E2E Tests Overview",
-				Description: "",
-				Widgets:     []*Widget{},
-			}, cmp.AllowUnexported(Dashboard{}))
-			return nil
+				Description: "Test desc",
+			}, nil
 		},
 	}
 
 	r := NewReportPortal(nil)
-	r.Dashboard = mockDashboard
+	r.Dashboard = mockService
 
 	err := r.Apply("test_project", file)
 	if err != nil {
 		t.Errorf("Apply retunred error: %s", err)
 	}
 
-	testDeepEqual(t, mockDashboard.Counter, MockDashboardServiceCounter{ApplyDashboard: 1})
+	testDeepEqual(t, mockService.Counter, MockServiceCounter{GetByName: 1})
 }
 
-func TestApply_Filter(t *testing.T) {
+func TestApply_Update(t *testing.T) {
 
-	input := `kind: Filter
-name: mk-e2e-test-suite
-type: Launch
-description: ""
-conditions:
-- filteringfield: name
-  condition: eq
-  value: mk-e2e-test-suite
-orders:
-- sortingcolumn: startTime
-  isasc: false
-- sortingcolumn: number
-  isasc: false
+	input := `kind: Dashboard
+name: MK E2E Tests Overview
+description: Test new desc
 `
 
-	file, cleanFile := writeTmpFile(t, "filter", input)
+	file, cleanFile := writeTmpFile(t, "dashboard", input)
 	defer cleanFile()
 
-	mockFilter := &MockFilterService{
-		ApplyFilterM: func(project string, d *Filter) error {
+	mockService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
 			testEqual(t, project, "test_project")
-			testDeepEqual(t, d, &Filter{
-				Kind:        FilterKind,
-				Name:        "mk-e2e-test-suite",
-				Type:        "Launch",
-				Description: "",
-				Conditions: []FilterCondition{
-					{FilteringField: "name", Condition: "eq", Value: "mk-e2e-test-suite"},
-				},
-				Orders: []FilterOrder{
-					{SortingColumn: "startTime", IsAsc: false},
-					{SortingColumn: "number", IsAsc: false},
-				},
-			}, cmp.AllowUnexported(Filter{}))
+			testEqual(t, name, "MK E2E Tests Overview")
+
+			return &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "Test old desc",
+			}, nil
+		},
+		UpdateM: func(project string, current, target Object) error {
+			testEqual(t, project, "test_project")
+			testDeepEqual(t, current, &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "Test old desc",
+			}, cmpopts.IgnoreUnexported(Dashboard{}))
+
+			testDeepEqual(t, target, &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "Test new desc",
+			}, cmpopts.IgnoreUnexported(Dashboard{}))
 			return nil
 		},
 	}
 
 	r := NewReportPortal(nil)
-	r.Filter = mockFilter
+	r.Dashboard = mockService
 
 	err := r.Apply("test_project", file)
 	if err != nil {
 		t.Errorf("Apply retunred error: %s", err)
 	}
 
-	testDeepEqual(t, mockFilter.Counter, MockFilterServiceCounter{ApplyFilter: 1})
+	testDeepEqual(t, mockService.Counter, MockServiceCounter{GetByName: 1, Update: 1})
+}
+
+func TestApply_Create(t *testing.T) {
+
+	input := `kind: Dashboard
+name: MK E2E Tests Overview
+description: Test desc
+`
+
+	file, cleanFile := writeTmpFile(t, "dashboard", input)
+	defer cleanFile()
+
+	mockService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
+			testEqual(t, project, "test_project")
+			testEqual(t, name, "MK E2E Tests Overview")
+			return nil, nil
+		},
+		CreateM: func(project string, o Object) error {
+			testEqual(t, project, "test_project")
+			testDeepEqual(t, o, &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "Test desc",
+			}, cmpopts.IgnoreUnexported(Dashboard{}))
+			return nil
+		},
+	}
+
+	r := NewReportPortal(nil)
+	r.Dashboard = mockService
+
+	err := r.Apply("test_project", file)
+	if err != nil {
+		t.Errorf("Apply retunred error: %s", err)
+	}
+
+	testDeepEqual(t, mockService.Counter, MockServiceCounter{GetByName: 1, Create: 1})
 }

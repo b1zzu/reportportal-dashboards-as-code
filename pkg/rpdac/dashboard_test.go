@@ -198,9 +198,9 @@ func TestGetDashboard(t *testing.T) {
 		Widget:          mockWidget,
 		ProjectSettings: mockProjectSettings})
 
-	got, err := r.Dashboard.GetDashboard("test_project", 1)
+	got, err := r.Dashboard.Get("test_project", 1)
 	if err != nil {
-		t.Errorf("ReportPortal.GetDashboard returned error: %v", err)
+		t.Errorf("ReportPortal.Get returned error: %v", err)
 	}
 
 	want := &Dashboard{
@@ -458,9 +458,9 @@ func TestGetDashboardByName(t *testing.T) {
 		Widget:          mockWidget,
 		ProjectSettings: mockProjectSettings})
 
-	got, err := r.Dashboard.GetDashboardByName("test_project", "MK E2E Tests Overview")
+	got, err := r.Dashboard.GetByName("test_project", "MK E2E Tests Overview")
 	if err != nil {
-		t.Errorf("ReportPortal.GetDashboardByName returned error: %v", err)
+		t.Errorf("ReportPortal.GetByName returned error: %v", err)
 	}
 
 	want := &Dashboard{
@@ -541,9 +541,9 @@ func TestGetDashboardByName_NotFound(t *testing.T) {
 
 	r := NewReportPortal(&reportportal.Client{Dashboard: mockDashboard})
 
-	got, err := r.Dashboard.GetDashboardByName("test_project", "MK E2E Tests Overview")
+	got, err := r.Dashboard.GetByName("test_project", "MK E2E Tests Overview")
 	if err != nil {
-		t.Errorf("ReportPortal.GetDashboardByName returned error: %v", err)
+		t.Errorf("ReportPortal.GetByName returned error: %v", err)
 	}
 
 	if got != nil {
@@ -563,9 +563,9 @@ func TestGetDashboardByName_Error(t *testing.T) {
 
 	r := NewReportPortal(&reportportal.Client{Dashboard: mockDashboard})
 
-	_, err := r.Dashboard.GetDashboardByName("test_project", "MK E2E Tests Overview")
+	_, err := r.Dashboard.GetByName("test_project", "MK E2E Tests Overview")
 	if err == nil {
-		t.Errorf("ReportPortal.GetDashboardByName did not return the error")
+		t.Errorf("ReportPortal.GetByName did not return the error")
 	}
 }
 
@@ -807,9 +807,9 @@ func TestCreateDashboard(t *testing.T) {
 		},
 	}
 
-	err := r.Dashboard.CreateDashboard("test_project", inputDashboard)
+	err := r.Dashboard.Create("test_project", inputDashboard)
 	if err != nil {
-		t.Errorf("ReportPortal.CreateDashboard returned error: %v", err)
+		t.Errorf("ReportPortal.Create returned error: %v", err)
 	}
 
 	testDeepEqual(t, mockDashboard.Counter, reportportal.MockDashboardServiceCounter{Create: 1, AddWidget: 2})
@@ -900,7 +900,7 @@ func TestApplyDashboard_Create(t *testing.T) {
 		},
 	}
 
-	err := r.Dashboard.ApplyDashboard("test_project", inputDashboard)
+	err := r.ApplyObject("test_project", inputDashboard)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyDashboard returned error: %v", err)
 	}
@@ -1082,7 +1082,7 @@ func TestApplyDashboard_Update(t *testing.T) {
 		},
 	}
 
-	err := r.Dashboard.ApplyDashboard("test_project", inputDashboard)
+	err := r.ApplyObject("test_project", inputDashboard)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyDashboard returned error: %v", err)
 	}
@@ -1313,7 +1313,7 @@ func TestApplyDashboard_Skip(t *testing.T) {
 		},
 	}
 
-	err := r.Dashboard.ApplyDashboard("test_project", inputDashboard)
+	err := r.ApplyObject("test_project", inputDashboard)
 	if err != nil {
 		t.Errorf("ReportPortal.ApplyDashboard returned error: %v", err)
 	}
@@ -1363,7 +1363,7 @@ func TestDeleteDashboard(t *testing.T) {
 		Dashboard: mockDashboard,
 	})
 
-	err := r.Dashboard.DeleteDashboard("test_project", "MK E2E Tests Overview")
+	err := r.Dashboard.Delete("test_project", "MK E2E Tests Overview")
 	if err != nil {
 		t.Errorf("ReportPortal.DeleteDashboard returned error: %v", err)
 	}

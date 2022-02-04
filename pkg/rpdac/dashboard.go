@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"sort"
 	"strings"
 
@@ -13,18 +12,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
-
-type IDashboardService interface {
-	Get(project string, id int) (Object, error)
-	Create(project string, o Object) error
-	Apply(project string, o Object) error
-
-	GetDashboard(project string, id int) (*Dashboard, error)
-	GetDashboardByName(project, name string) (*Dashboard, error)
-	CreateDashboard(project string, d *Dashboard) error
-	ApplyDashboard(project string, d *Dashboard) error
-	DeleteDashboard(project, name string) error
-}
 
 type DashboardService service
 
@@ -66,18 +53,6 @@ type WidgetContentParameters struct {
 }
 
 func (s *DashboardService) Get(project string, id int) (Object, error) {
-	return s.GetDashboard(project, id)
-}
-
-func (s *DashboardService) Create(project string, o Object) error {
-	return s.CreateDashboard(project, o.(*Dashboard))
-}
-
-func (s *DashboardService) Apply(project string, o Object) error {
-	return s.ApplyDashboard(project, o.(*Dashboard))
-}
-
-func (s *DashboardService) GetDashboard(project string, id int) (*Dashboard, error) {
 
 	// retireve the dashboard defintion
 	d, _, err := s.client.Dashboard.GetByID(project, id)
@@ -88,7 +63,7 @@ func (s *DashboardService) GetDashboard(project string, id int) (*Dashboard, err
 	return s.loadDashboard(project, d)
 }
 
-func (s *DashboardService) GetDashboardByName(project, name string) (*Dashboard, error) {
+func (s *DashboardService) GetByName(project, name string) (Object, error) {
 
 	d, _, err := s.client.Dashboard.GetByName(project, name)
 	if err != nil {
@@ -129,7 +104,8 @@ func (s *DashboardService) loadDashboard(project string, d *reportportal.Dashboa
 	return ToDashboard(d, widgets), nil
 }
 
-func (s *DashboardService) CreateDashboard(project string, d *Dashboard) error {
+func (s *DashboardService) Create(project string, o Object) error {
+	d := o.(*Dashboard)
 
 	filtersMap, err := s.filtersMap(project, d.Widgets)
 	if err != nil {
@@ -185,36 +161,8 @@ func (s *DashboardService) createWidgets(
 	return nil
 }
 
-// Create or Recreate the dashboard
-func (s *DashboardService) ApplyDashboard(project string, d *Dashboard) error {
-
-	currentDashboard, err := s.GetDashboardByName(project, d.Name)
-	if err != nil {
-		return fmt.Errorf("error retrieving Dashboard with name '%s': %w", d.Name, err)
-	}
-
-	if currentDashboard != nil {
-
-		if currentDashboard.Equals(d) {
-			log.Printf("Skip apply for Dashboard with name '%s' in project '%s'", d.Name, project)
-			return nil
-		}
-
-		if err = s.updateDashboard(project, currentDashboard, d); err != nil {
-			return err
-		}
-		log.Printf("Dashboard with name '%s' updated in project '%s'", d.Name, project)
-		return nil
-	}
-
-	if err = s.CreateDashboard(project, d); err != nil {
-		return err
-	}
-	log.Printf("Dashboard with name '%s' created in project '%s'", d.Name, project)
-	return nil
-}
-
-func (s *DashboardService) updateDashboard(project string, currentDashboard, targetDashboard *Dashboard) error {
+func (s *DashboardService) Update(project string, current, target Object) error {
+	currentDashboard, targetDashboard := current.(*Dashboard), target.(*Dashboard)
 
 	// resolve all filters
 	filtersMap, err := s.filtersMap(project, targetDashboard.Widgets)
@@ -247,7 +195,7 @@ func (s *DashboardService) updateDashboard(project string, currentDashboard, tar
 }
 
 // Delete the Dashboard with the given name and Widgets created for it
-func (s *DashboardService) DeleteDashboard(project, name string) error {
+func (s *DashboardService) Delete(project, name string) error {
 
 	d, _, err := s.client.Dashboard.GetByName(project, name)
 	if err != nil {
@@ -434,7 +382,7 @@ func (d *Dashboard) GetKind() ObjectKind {
 }
 
 // Compare the two Dashboards ignoring slices order
-func (left *Dashboard) Equals(right *Dashboard) bool {
+func (left *Dashboard) Equals(right Object) bool {
 
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(Dashboard{}, Widget{}),

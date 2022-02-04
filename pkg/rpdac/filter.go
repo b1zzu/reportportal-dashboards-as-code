@@ -1,6 +1,7 @@
 package rpdac
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -10,17 +11,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"gopkg.in/yaml.v2"
 )
-
-type IFilterService interface {
-	Get(project string, id int) (Object, error)
-	Create(project string, o Object) error
-	Apply(project string, o Object) error
-
-	GetFilter(project string, id int) (*Filter, error)
-	GetFilterByName(project, name string) (*Filter, error)
-	CreateFilter(project string, f *Filter) error
-	ApplyFilter(project string, f *Filter) error
-}
 
 type FilterService service
 
@@ -47,18 +37,6 @@ type FilterOrder struct {
 }
 
 func (s *FilterService) Get(project string, id int) (Object, error) {
-	return s.GetFilter(project, id)
-}
-
-func (s *FilterService) Create(project string, o Object) error {
-	return s.CreateFilter(project, o.(*Filter))
-}
-
-func (s *FilterService) Apply(project string, o Object) error {
-	return s.ApplyFilter(project, o.(*Filter))
-}
-
-func (s *FilterService) GetFilter(project string, id int) (*Filter, error) {
 
 	// retireve the filter defintion
 	f, _, err := s.client.Filter.GetByID(project, id)
@@ -69,7 +47,7 @@ func (s *FilterService) GetFilter(project string, id int) (*Filter, error) {
 	return ToFilter(f), nil
 }
 
-func (s *FilterService) GetFilterByName(project, name string) (*Filter, error) {
+func (s *FilterService) GetByName(project, name string) (Object, error) {
 
 	f, _, err := s.client.Filter.GetByName(project, name)
 	if err != nil {
@@ -83,7 +61,8 @@ func (s *FilterService) GetFilterByName(project, name string) (*Filter, error) {
 	return ToFilter(f), nil
 }
 
-func (s *FilterService) CreateFilter(project string, f *Filter) error {
+func (s *FilterService) Create(project string, o Object) error {
+	f := o.(*Filter)
 
 	filterID, _, err := s.client.Filter.Create(project, FilterToNewFilter(f))
 	if err != nil {
@@ -94,28 +73,8 @@ func (s *FilterService) CreateFilter(project string, f *Filter) error {
 	return nil
 }
 
-func (s *FilterService) ApplyFilter(project string, f *Filter) error {
-
-	currentFilter, err := s.GetFilterByName(project, f.Name)
-	if err != nil {
-		return fmt.Errorf("error retrieving filter \"%s\" by name: %w", f.Name, err)
-	}
-
-	if currentFilter != nil {
-
-		if currentFilter.Equals(f) {
-			log.Printf("skip apply for filter \"%s\"", f.Name)
-			return nil
-		}
-
-		return s.updateFilter(project, currentFilter, f)
-	}
-
-	return s.CreateFilter(project, f)
-
-}
-
-func (s *FilterService) updateFilter(project string, currentFilter, targetFilter *Filter) error {
+func (s *FilterService) Update(project string, current, target Object) error {
+	currentFilter, targetFilter := current.(*Filter), target.(*Filter)
 
 	_, _, err := s.client.Filter.Update(project, currentFilter.origin.ID, FilterToUpdateFilter(targetFilter))
 	if err != nil {
@@ -124,6 +83,10 @@ func (s *FilterService) updateFilter(project string, currentFilter, targetFilter
 
 	log.Printf("update \"%s\" filter", targetFilter.Name)
 	return nil
+}
+
+func (s *FilterService) Delete(project, name string) error {
+	return errors.New("unimplemented")
 }
 
 func ToFilter(f *reportportal.Filter) *Filter {
@@ -211,7 +174,7 @@ func (f *Filter) GetKind() ObjectKind {
 	return f.Kind
 }
 
-func (left *Filter) Equals(right *Filter) bool {
+func (left *Filter) Equals(right Object) bool {
 	opts := cmp.Options{
 		cmpopts.IgnoreUnexported(Filter{}),
 
