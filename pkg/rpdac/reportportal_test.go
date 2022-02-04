@@ -1,6 +1,7 @@
 package rpdac
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -268,7 +269,7 @@ description: Test desc
 	r := NewReportPortal(nil)
 	r.Dashboard = mockService
 
-	err := r.Apply("test_project", file)
+	err := r.Apply("test_project", file, false)
 	if err != nil {
 		t.Errorf("Apply retunred error: %s", err)
 	}
@@ -317,7 +318,7 @@ description: Test new desc
 	r := NewReportPortal(nil)
 	r.Dashboard = mockService
 
-	err := r.Apply("test_project", file)
+	err := r.Apply("test_project", file, false)
 	if err != nil {
 		t.Errorf("Apply retunred error: %s", err)
 	}
@@ -355,10 +356,150 @@ description: Test desc
 	r := NewReportPortal(nil)
 	r.Dashboard = mockService
 
-	err := r.Apply("test_project", file)
+	err := r.Apply("test_project", file, false)
 	if err != nil {
 		t.Errorf("Apply retunred error: %s", err)
 	}
 
 	testDeepEqual(t, mockService.Counter, MockServiceCounter{GetByName: 1, Create: 1})
+}
+
+func tempDir(t *testing.T) (string, func()) {
+	t.Helper()
+
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatalf("failed to create tmp directory: %s", err)
+	}
+	return dir, func() { os.RemoveAll(dir) }
+}
+
+func mkdir(t *testing.T, name string) {
+	t.Helper()
+
+	err := os.Mkdir(name, 0755)
+	if err != nil {
+		t.Fatalf("failed to create dir '%s': %s", name, err)
+	}
+}
+
+func writeFile(t *testing.T, filename, data string) {
+	t.Helper()
+
+	err := ioutil.WriteFile(filename, []byte(data), 0644)
+	if err != nil {
+		t.Fatalf("failed to write file '%s': %s", filename, err)
+	}
+}
+
+func TestApply_Directory(t *testing.T) {
+
+	dir, clean := tempDir(t)
+	defer clean()
+
+	writeFile(t, dir+"/dashboard.yml", `kind: Dashboard
+name: Test
+`)
+	writeFile(t, dir+"/skipme.xml", `Some randome stuff`)
+	mkdir(t, dir+"/subfolder")
+	writeFile(t, dir+"/subfolder/filter.yaml", `kind: Filter
+name: Test
+`)
+
+	mockDashboardService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
+			testEqual(t, project, "test_project")
+			testEqual(t, name, "Test")
+			return nil, nil
+		},
+		CreateM: func(project string, o Object) error {
+			testEqual(t, project, "test_project")
+			testDeepEqual(t, o, &Dashboard{
+				Kind: DashboardKind,
+				Name: "Test",
+			}, cmpopts.IgnoreUnexported(Dashboard{}))
+			return nil
+		},
+	}
+	mockFilterService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
+			testEqual(t, project, "test_project")
+			testEqual(t, name, "Test")
+			return &Filter{
+				Kind: FilterKind,
+				Name: "Test",
+			}, nil
+		},
+	}
+	r := NewReportPortal(nil)
+	r.Dashboard = mockDashboardService
+	r.Filter = mockFilterService
+
+	err := r.Apply("test_project", dir, true)
+	if err != nil {
+		t.Errorf("Apply retunred error: %s", err)
+	}
+
+	testDeepEqual(t, mockDashboardService.Counter, MockServiceCounter{GetByName: 1, Create: 1})
+	testDeepEqual(t, mockFilterService.Counter, MockServiceCounter{GetByName: 1})
+}
+
+func TestApply_DirectoryWithoutRecursive(t *testing.T) {
+
+	dir, clean := tempDir(t)
+	defer clean()
+	r := NewReportPortal(nil)
+
+	err := r.Apply("test_project", dir, false)
+	if err == nil {
+		t.Errorf("Want err but got nil")
+	} else {
+		want := fmt.Sprintf("error '%s' is a directory, use the `-r` option if you want to recursive apply all object in the directory", dir)
+		if err.Error() != want {
+			t.Errorf("Want err '%s' but got '%s'", want, err)
+		}
+	}
+}
+
+func TestApply_DirectoryWithWrongObject(t *testing.T) {
+
+	dir, clean := tempDir(t)
+	defer clean()
+
+	writeFile(t, dir+"/dashboard.yml", `kind: Something
+name: Test
+`)
+	writeFile(t, dir+"/skipme.xml", `Some randome stuff`)
+	mkdir(t, dir+"/subfolder")
+	writeFile(t, dir+"/subfolder/filter.yaml", `kind: Filter
+name: Test
+`)
+
+	mockDashboardService := &MockService{}
+	mockFilterService := &MockService{
+		GetByNameM: func(project, name string) (Object, error) {
+			testEqual(t, project, "test_project")
+			testEqual(t, name, "Test")
+			return &Filter{
+				Kind: FilterKind,
+				Name: "Test",
+			}, nil
+		},
+	}
+	r := NewReportPortal(nil)
+	r.Dashboard = mockDashboardService
+	r.Filter = mockFilterService
+
+	err := r.Apply("test_project", dir, true)
+	if err == nil {
+		t.Errorf("Want err but got nil")
+	} else {
+		want := "error applying one or more objects"
+		if err.Error() != want {
+			t.Errorf("Want err '%s' but got '%s'", want, err)
+		}
+	}
+
+	testDeepEqual(t, mockDashboardService.Counter, MockServiceCounter{})
+	testDeepEqual(t, mockFilterService.Counter, MockServiceCounter{GetByName: 1})
 }

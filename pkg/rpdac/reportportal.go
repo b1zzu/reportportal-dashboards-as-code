@@ -1,9 +1,14 @@
 package rpdac
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
 	"gopkg.in/yaml.v2"
@@ -122,7 +127,59 @@ func (r *ReportPortal) Create(project, file string) error {
 	return nil
 }
 
-func (r *ReportPortal) Apply(project, file string) error {
+func (r *ReportPortal) Apply(project, file string, recursive bool) error {
+
+	info, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("error '%s' is not a vailid file or directory: %w", file, err)
+	} else if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+
+		if !recursive {
+			return fmt.Errorf("error '%s' is a directory, use the `-r` option if you want to recursive apply all object in the directory", file)
+		}
+
+		failed := false
+		err = filepath.WalkDir(file, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				log.Printf("Unknow error: %s", err)
+				return nil
+			}
+
+			if d.IsDir() {
+				// skip directories
+				return nil
+			}
+
+			if !strings.HasSuffix(d.Name(), ".yml") && !strings.HasSuffix(d.Name(), ".yaml") {
+				log.Printf("Ignore file '%s' because only .yml|.yaml are supported", path)
+				return nil
+			}
+
+			if err := r.ApplyFile(project, path); err != nil {
+				failed = true
+				log.Printf("Failed to apply file '%s': %s", path, err)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if failed {
+			return errors.New("error applying one or more objects")
+		}
+		return nil
+
+	} else {
+		return r.ApplyFile(project, file)
+	}
+}
+
+func (r *ReportPortal) ApplyFile(project, file string) error {
 
 	fileBytes, err := ioutil.ReadFile(file)
 	if err != nil {
