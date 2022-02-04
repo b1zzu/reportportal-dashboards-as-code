@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	applyFile    string
-	applyProject string
+	applyFile      string
+	applyProject   string
+	applyRecursive bool
 
 	applyCmd = &cobra.Command{
 		Use:   "apply",
@@ -20,7 +21,7 @@ var (
 			}
 			r := rpdac.NewReportPortal(c)
 
-			return r.Apply(applyProject, applyFile)
+			return r.Apply(applyProject, applyFile, applyRecursive)
 		},
 	}
 )
@@ -28,6 +29,7 @@ var (
 func init() {
 	applyCmd.Flags().StringVarP(&applyFile, "file", "f", "", "YAML file")
 	applyCmd.Flags().StringVarP(&applyProject, "project", "p", "", "ReportPortal Project")
+	applyCmd.Flags().BoolVarP(&applyRecursive, "recursive", "r", false, "If file is a directory it will recusive apply all objects in it")
 
 	applyCmd.MarkFlagRequired("file")
 	applyCmd.MarkFlagRequired("project")

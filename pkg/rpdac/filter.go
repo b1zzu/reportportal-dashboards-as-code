@@ -80,8 +80,6 @@ func (s *FilterService) Update(project string, current, target Object) error {
 	if err != nil {
 		return fmt.Errorf("error updating filter \"%s\": %w", targetFilter.Name, err)
 	}
-
-	log.Printf("update \"%s\" filter", targetFilter.Name)
 	return nil
 }
 
