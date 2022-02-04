@@ -1840,14 +1840,14 @@ func TestDashboardEquals(t *testing.T) {
 			expexct: false,
 		},
 		{
-			description: "Compare dashboards wehre one with nil widgets should return false",
+			description: "Compare dashboards wehre one with nil widgets should return true",
 			left: &Dashboard{
 				Widgets: []*Widget{},
 			},
 			right: &Dashboard{
 				Widgets: nil,
 			},
-			expexct: false,
+			expexct: true,
 		},
 		{
 			description: "Compare dashboards with different widgets should return false",
@@ -2078,7 +2078,11 @@ func TestWidgetEquals(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			r := test.left.Equals(test.right)
+
+			left := &Dashboard{Widgets: []*Widget{test.left}}
+			right := &Dashboard{Widgets: []*Widget{test.right}}
+
+			r := left.Equals(right)
 			if r != test.expexct {
 				t.Errorf("expected '%t' but got '%t'", test.expexct, r)
 			}

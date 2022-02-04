@@ -3,9 +3,11 @@ package rpdac
 import (
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
-	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/util"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gopkg.in/yaml.v2"
 )
 
@@ -209,60 +211,29 @@ func (f *Filter) GetKind() ObjectKind {
 	return f.Kind
 }
 
-func conditionsToStringSlice(conditions []FilterCondition) []string {
-	s := make([]string, len(conditions))
-	for i, c := range conditions {
-		s[i] = c.Condition + c.FilteringField + c.Value
-	}
-	return s
-}
-
-func ordersToStringSlice(orders []FilterOrder) []string {
-	s := make([]string, len(orders))
-	for i, o := range orders {
-		sort := "dsc"
-		if o.IsAsc {
-			sort = "asc"
-		}
-
-		s[i] = o.SortingColumn + sort
-	}
-	return s
-}
-
 func (left *Filter) Equals(right *Filter) bool {
-	if left == nil || right == nil {
-		return left == right
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(Filter{}),
+
+		// sort FilterConditions
+		cmp.Transformer("SortConditions", func(in []FilterCondition) []FilterCondition {
+			out := make([]FilterCondition, len(in))
+			copy(out, in) // copy input to avoid mutating it
+			sort.Slice(out, func(i, j int) bool {
+				return fmt.Sprintf("%+v", out[i]) < fmt.Sprintf("%+v", out[j])
+			})
+			return out
+		}),
+
+		// sort FilterOrders
+		cmp.Transformer("SortOrders", func(in []FilterOrder) []FilterOrder {
+			out := make([]FilterOrder, len(in))
+			copy(out, in) // copy input to avoid mutating it
+			sort.Slice(out, func(i, j int) bool {
+				return fmt.Sprintf("%+v", out[i]) < fmt.Sprintf("%+v", out[j])
+			})
+			return out
+		}),
 	}
-
-	if left.Name != right.Name ||
-		left.Type != right.Type ||
-		left.Description != right.Description {
-
-		return false
-	}
-
-	// compare conditions
-	if left.Conditions != nil && right.Conditions != nil {
-
-		leftConditions := conditionsToStringSlice(left.Conditions)
-		rightCondition := conditionsToStringSlice(right.Conditions)
-
-		if !util.CompareStringSlices(leftConditions, rightCondition) {
-			return false
-		}
-
-	} else if !(left.Conditions == nil && right.Conditions == nil) {
-		return false
-	}
-
-	// compare orders
-	if left.Orders == nil || right.Orders == nil {
-		return left.Orders == nil && right.Orders == nil
-	}
-
-	leftOrders := ordersToStringSlice(left.Orders)
-	rightOrders := ordersToStringSlice(right.Orders)
-
-	return util.CompareStringSlices(leftOrders, rightOrders)
+	return cmp.Equal(left, right, opts)
 }

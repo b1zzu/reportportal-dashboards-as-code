@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/reportportal"
-	"github.com/b1zzu/reportportal-dashboards-as-code/pkg/util"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 type IDashboardService interface {
@@ -432,96 +433,29 @@ func (d *Dashboard) GetKind() ObjectKind {
 	return d.Kind
 }
 
-func (left *Dashboard) Equals(o util.Comparable) bool {
+// Compare the two Dashboards ignoring slices order
+func (left *Dashboard) Equals(right *Dashboard) bool {
 
-	// TODO: Can be substiuted with cmp.Equal() if we can make it order indipendent for slices
+	opts := cmp.Options{
+		cmpopts.IgnoreUnexported(Dashboard{}, Widget{}),
 
-	if left == nil || o == nil {
-		return left == o
+		// sort Widgets
+		cmp.Transformer("SortWidgets", func(in []*Widget) []*Widget {
+			out := make([]*Widget, len(in))
+			copy(out, in) // copy input to avoid mutating it
+			sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+			return out
+		}),
+
+		// sort strings (Widget.Filters, WidgetContentParameters.ContentFields)
+		cmp.Transformer("SortStrings", func(in []string) []string {
+			out := make([]string, len(in))
+			copy(out, in) // copy input to avoid mutating it
+			sort.Strings(out)
+			return out
+		}),
 	}
-
-	right, ok := o.(*Dashboard)
-	if !ok {
-		return false
-	}
-
-	if left.Name != right.Name || left.Description != right.Description {
-		return false
-	}
-
-	if left.Widgets == nil || right.Widgets == nil {
-		return left.Widgets == nil && right.Widgets == nil
-	}
-
-	leftWidgets := make([]util.Comparable, len(left.Widgets))
-	for i := range left.Widgets {
-		leftWidgets[i] = left.Widgets[i]
-	}
-
-	rightWidgets := make([]util.Comparable, len(right.Widgets))
-	for i := range right.Widgets {
-		rightWidgets[i] = right.Widgets[i]
-	}
-
-	return util.CompareSlices(leftWidgets, rightWidgets)
-}
-
-func (d *Dashboard) Key() string {
-	return d.Name
-}
-
-func (left *Widget) Equals(o util.Comparable) bool {
-	if left == nil || o == nil {
-		return left == o
-	}
-
-	right, ok := o.(*Widget)
-	if !ok {
-		return false
-	}
-
-	return left.Name == right.Name &&
-		left.Description == right.Description &&
-		left.WidgetType == right.WidgetType &&
-		left.WidgetSize.Equals(&right.WidgetSize) &&
-		util.CompareStringSlices(left.Filters, right.Filters) &&
-		left.WidgetPosition.Equals(&right.WidgetPosition) &&
-		left.ContentParameters.Equals(&right.ContentParameters)
-}
-
-func (d *Widget) Key() string {
-	return d.Name
-}
-
-func (left *WidgetSize) Equals(right *WidgetSize) bool {
-
-	if left == nil || right == nil {
-		return left == right
-	}
-
-	return left.Height == right.Height &&
-		left.Width == right.Width
-}
-
-func (left *WidgetPosition) Equals(right *WidgetPosition) bool {
-
-	if left == nil || right == nil {
-		return left == right
-	}
-
-	return left.PositionX == right.PositionX &&
-		left.PositionY == right.PositionY
-}
-
-func (left *WidgetContentParameters) Equals(right *WidgetContentParameters) bool {
-
-	if left == nil || right == nil {
-		return left == right
-	}
-
-	return util.CompareStringSlices(left.ContentFields, right.ContentFields) &&
-		left.ItemsCount == right.ItemsCount &&
-		reflect.DeepEqual(right.WidgetOptions, left.WidgetOptions)
+	return cmp.Equal(left, right, opts)
 }
 
 func (d *Dashboard) HashName() string {
