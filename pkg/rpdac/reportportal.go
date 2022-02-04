@@ -14,13 +14,14 @@ type ReportPortal struct {
 
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
-	Dashboard IDashboardService
-	Filter    IFilterService
+	Dashboard ServiceInterface
+	Filter    ServiceInterface
 }
 
 type Object interface {
 	GetName() string
 	GetKind() ObjectKind
+	Equals(o Object) bool
 }
 
 type GenericObject struct {
@@ -28,20 +29,16 @@ type GenericObject struct {
 	Name string     `json:"name"`
 }
 
+type ServiceInterface interface {
+	Get(project string, id int) (Object, error)
+	GetByName(project, name string) (Object, error)
+	Create(project string, o Object) error
+	Update(project string, current Object, target Object) error
+	Delete(project, name string) error
+}
+
 type service struct {
 	client *reportportal.Client
-}
-
-type GetInterface interface {
-	Get(project string, id int) (Object, error)
-}
-
-type CreateInterface interface {
-	Create(project string, o Object) error
-}
-
-type ApplyInterface interface {
-	Apply(project string, o Object) error
 }
 
 func NewReportPortal(c *reportportal.Client) *ReportPortal {
@@ -52,6 +49,17 @@ func NewReportPortal(c *reportportal.Client) *ReportPortal {
 	return r
 }
 
+func (r *ReportPortal) Service(kind ObjectKind) (ServiceInterface, error) {
+	switch kind {
+	case DashboardKind:
+		return r.Dashboard, nil
+	case FilterKind:
+		return r.Filter, nil
+	default:
+		return nil, fmt.Errorf("error: object kind '%s' is not supported", kind.String())
+	}
+}
+
 // Export the ObjectKind with the passed id from the passed project to the passed file.
 //
 // The file can be a relative or absoulte path to the file that will be written with the
@@ -59,14 +67,9 @@ func NewReportPortal(c *reportportal.Client) *ReportPortal {
 //
 func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string) error {
 
-	var s GetInterface
-	switch k {
-	case DashboardKind:
-		s = r.Dashboard
-	case FilterKind:
-		s = r.Filter
-	default:
-		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", k.String())
+	s, err := r.Service(k)
+	if err != nil {
+		return err
 	}
 
 	// retrieve object from reportportal
@@ -105,14 +108,9 @@ func (r *ReportPortal) Create(project, file string) error {
 		return fmt.Errorf("error unmarshal (decoding) file '%s': %w", file, err)
 	}
 
-	var s CreateInterface
-	switch o.GetKind() {
-	case DashboardKind:
-		s = r.Dashboard
-	case FilterKind:
-		s = r.Filter
-	default:
-		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", o.GetKind().String())
+	s, err := r.Service(o.GetKind())
+	if err != nil {
+		return err
 	}
 
 	err = s.Create(project, o)
@@ -126,8 +124,6 @@ func (r *ReportPortal) Create(project, file string) error {
 
 func (r *ReportPortal) Apply(project, file string) error {
 
-	// TODO: The Apply function can be optimizied by removing the apply logic from the services and move it here
-
 	fileBytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("error reading file '%s': %w", file, err)
@@ -138,21 +134,39 @@ func (r *ReportPortal) Apply(project, file string) error {
 		return fmt.Errorf("error unmarshal (decoding) file '%s': %w", file, err)
 	}
 
-	var s ApplyInterface
-	switch o.GetKind() {
-	case DashboardKind:
-		s = r.Dashboard
-	case FilterKind:
-		s = r.Filter
-	default:
-		return fmt.Errorf("error: object kind '%s' is not suppoerted from the export method", o.GetKind().String())
-	}
+	return r.ApplyObject(project, o)
+}
 
-	err = s.Apply(project, o)
+func (r *ReportPortal) ApplyObject(project string, o Object) error {
+
+	s, err := r.Service(o.GetKind())
 	if err != nil {
-		return fmt.Errorf("error applying %s from file '%s' in project '%s': %w", o.GetKind().String(), file, project, err)
+		return err
 	}
 
+	current, err := s.GetByName(project, o.GetName())
+	if err != nil {
+		return fmt.Errorf("error retrieving %s with name '%s': %w", o.GetKind(), o.GetName(), err)
+	}
+
+	if current != nil {
+
+		if current.Equals(o) {
+			log.Printf("Skip apply %s with name '%s' in project '%s'", o.GetKind(), o.GetName(), project)
+			return nil
+		}
+
+		if err = s.Update(project, current, o); err != nil {
+			return err
+		}
+		log.Printf("%s with name '%s' updated in project '%s'", o.GetKind(), o.GetName(), project)
+		return nil
+	}
+
+	if err = s.Create(project, o); err != nil {
+		return err
+	}
+	log.Printf("%s with name '%s' created in project '%s'", o.GetKind(), o.GetName(), project)
 	return nil
 }
 
