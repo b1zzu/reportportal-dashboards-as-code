@@ -14,10 +14,12 @@ type Test struct {
 }
 
 var (
-	exportFile        string
-	exportProject     string
-	exportDashboardID int
-	exportFilterID    int
+	exportFile          string
+	exportProject       string
+	exportDashboardID   int
+	exportDashboardName string
+	exportFilterID      int
+	exportFilterName    string
 
 	exportCmd = &cobra.Command{
 		Use: "export",
@@ -39,7 +41,7 @@ var (
 			}
 			r := rpdac.NewReportPortal(c)
 
-			return r.Export(rpdac.DashboardKind, exportProject, exportDashboardID, exportFile)
+			return r.Export(rpdac.DashboardKind, exportProject, exportDashboardID, exportDashboardName, exportFile)
 		},
 	}
 
@@ -54,7 +56,7 @@ var (
 			}
 			r := rpdac.NewReportPortal(c)
 
-			return r.Export(rpdac.DashboardKind, exportProject, exportFilterID, exportFile)
+			return r.Export(rpdac.DashboardKind, exportProject, exportFilterID, exportFilterName, exportFile)
 		},
 	}
 )
@@ -81,14 +83,14 @@ func init() {
 
 	// Export Dashboard CMD
 	exportDashboardCmd.Flags().IntVar(&exportDashboardID, "id", -1, "ReportPortal Dashboard ID")
-	exportDashboardCmd.MarkFlagRequired("id")
+	exportDashboardCmd.Flags().StringVar(&exportDashboardName, "name", "", "ReportPortal Dashboard Name")
 	decorateCommonOptions(exportDashboardCmd)
 
 	exportCmd.AddCommand(exportDashboardCmd)
 
 	// Export Filter CMD
 	exportFilterCmd.Flags().IntVar(&exportFilterID, "id", -1, "ReportPortal Filter ID")
-	exportFilterCmd.MarkFlagRequired("id")
+	exportFilterCmd.Flags().StringVar(&exportFilterName, "name", "", "ReportPortal Filter Name")
 	decorateCommonOptions(exportFilterCmd)
 
 	exportCmd.AddCommand(exportFilterCmd)
