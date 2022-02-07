@@ -95,7 +95,40 @@ func TestExport_Dashboard(t *testing.T) {
 		},
 	}
 
-	err := r.Export(DashboardKind, "test_project", 3, file)
+	err := r.Export(DashboardKind, "test_project", 3, "", file)
+	if err != nil {
+		t.Errorf("Export returned error: %s", err)
+	}
+
+	want := `kind: Dashboard
+name: MK E2E Tests Overview
+description: ""
+widgets: []
+`
+
+	testFileContains(t, file, want)
+}
+
+func TestExport_DashboardByName(t *testing.T) {
+	file, cleanFile := tmpFile(t, "dashboard")
+	defer cleanFile()
+
+	r := NewReportPortal(nil)
+
+	r.Dashboard = &MockService{
+		GetByNameM: func(project string, name string) (Object, error) {
+			testEqual(t, project, "test_project")
+			testEqual(t, name, "MK E2E Tests Overview")
+			return &Dashboard{
+				Kind:        DashboardKind,
+				Name:        "MK E2E Tests Overview",
+				Description: "",
+				Widgets:     []*Widget{},
+			}, nil
+		},
+	}
+
+	err := r.Export(DashboardKind, "test_project", -1, "MK E2E Tests Overview", file)
 	if err != nil {
 		t.Errorf("Export returned error: %s", err)
 	}
@@ -134,7 +167,7 @@ func TestExport_Filter(t *testing.T) {
 		},
 	}
 
-	err := r.Export(FilterKind, "test_project", 3, file)
+	err := r.Export(FilterKind, "test_project", 3, "", file)
 	if err != nil {
 		t.Errorf("Export returned error: %s", err)
 	}

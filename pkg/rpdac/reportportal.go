@@ -65,22 +65,39 @@ func (r *ReportPortal) Service(kind ObjectKind) (ServiceInterface, error) {
 	}
 }
 
-// Export the ObjectKind with the passed id from the passed project to the passed file.
+// Export the ObjectKind with the passed id or name from the passed project to the passed file.
 //
 // The file can be a relative or absoulte path to the file that will be written with the
 // full content of the exported Object.
 //
-func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string) error {
+func (r *ReportPortal) Export(k ObjectKind, project string, id int, name string, file string) error {
+
+	if id == -1 && name == "" {
+		return fmt.Errorf("you need to specify the id (--id int) or name (--name string) of the %s to export", k)
+	}
 
 	s, err := r.Service(k)
 	if err != nil {
 		return err
 	}
 
-	// retrieve object from reportportal
-	o, err := s.Get(project, id)
-	if err != nil {
-		return fmt.Errorf("error retrieving '%s' with id '%d' in project '%s': %w", k.String(), id, project, err)
+	var o Object
+	if id != -1 {
+		// retrieve object from reportportal by id
+		o, err = s.Get(project, id)
+		if err != nil {
+			return fmt.Errorf("error retrieving '%s' with id '%d' in project '%s': %w", k, id, project, err)
+		}
+	} else {
+		// retrieve object from reportportal by name
+		o, err = s.GetByName(project, name)
+		if err != nil {
+			return fmt.Errorf("error retrieving '%s' with name '%s' in project '%s': %w", k, name, project, err)
+		}
+
+		if o == nil {
+			return fmt.Errorf("%s with name '%s' in project '%s' not found", k, name, project)
+		}
 	}
 
 	// convert object to YAML
@@ -95,7 +112,7 @@ func (r *ReportPortal) Export(k ObjectKind, project string, id int, file string)
 		return fmt.Errorf("error writing '%s' with id '%d' in project '%s' to file '%s': %w", k.String(), id, project, file, err)
 	}
 
-	log.Printf("%s with id '%d' in project '%s' exported to '%s'", k.String(), id, project, file)
+	log.Printf("%s with name '%s' in project '%s' exported to '%s'", k, o.GetName(), project, file)
 	return nil
 }
 
